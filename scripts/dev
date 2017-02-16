@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+./node_modules/nodemon/bin/nodemon.js --quiet --exec ./node_modules/babel-cli/bin/babel-node.js --presets=es2015 app/index.js --env 'development'

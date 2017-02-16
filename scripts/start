@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+nodemon app/index.js --exec babel-node --presets=es2015 --env 'development'

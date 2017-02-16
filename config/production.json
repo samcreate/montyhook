@@ -1,0 +1,8 @@
+{
+    "HOST": "montymin.herokuapp.com",
+    "APIAI_CLIENT_TOKEN": "bc1e96cecdfe4063ba406fa1e95ff78e",
+    "APIAI_DEV_TOKEN": "5b6735d64a114db5a669b8fb740e7813",
+    "FBACCESSTOKEN": "EAALmwut1We0BABzjnSojSnQvyd8Q4GDzTm43xfrUajmVay3dDSrHgMNdy5ZCSU8SSVZCVzIdAbxIXpsWKGmRlb4X6axdzJLZAZApM0mulsp91h5RGMR1xd6iZC4HSsrhCipeFWqqqJvCulZCZBPI9cYwZBfkcp6ClrVImSVzh3Fx4QZDZD",
+    "SLACK_CHANNEL":"#missing-intents",
+    "DBCONNECTION":"postgres://xjxawixjxibfsp:leieCrlDuGXs1sFkqBQCCDoR9Y@ec2-50-17-206-164.compute-1.amazonaws.com:5432/deuoak0419t6qe"
+}
