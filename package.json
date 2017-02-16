@@ -30,13 +30,16 @@
     "montysdb22": "git+https://081e7e8f6a631c230d4d6a32584d2d9580fb2f85:x-oauth-basic@github.com/samcreate/montydb.git",
     "morgan": "^1.6.1",
     "multer": "^1.0.5",
+    "node-fetch": "^1.6.3",
     "nodemon": "^1.11.0",
     "pg": "^6.1.2",
     "pg-native": "^1.10.0",
+    "request": "^2.79.0",
     "require-all": "^2.0.0",
     "sequelize": "^3.30.2",
     "serve-favicon": "^2.3.0",
-    "shell-arguments": "^1.0.4"
+    "shell-arguments": "^1.0.4",
+    "slack-node": "^0.1.8"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",

@@ -14,7 +14,7 @@ router
 router
   .route('/apiai-webhook')
   .get(webhook.test)
-  .post(users.create);
+  .post(webhook.router);
 
 router
   .route('/users/:id')
