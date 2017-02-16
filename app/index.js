@@ -11,7 +11,7 @@ import {server} from '../config';
 let app = express();
 
 app.set('env', shell.env || process.env.NODE_ENV || 'production');
-app.set('port', server.port);
+app.set('port', process.env.PORT || server.port);
 
 if (app.get('env') === 'development') {
   app.use(morgan('dev'));
