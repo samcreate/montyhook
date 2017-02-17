@@ -16,8 +16,8 @@
     "SLACKYPOO":"xoxp-62934831171-62994946897-135914871332-06911ac25dcb8cadcfe0f4eef92a7d60",
     "FBACCESSTOKEN": "EAALmTHli9KUBANF0opXIyUOXWdBW6mGtZAcNJUJQJhqwe89d998ZCmqag6YlhL8ZCZABe4NrCcZBJd4xLanmzmcXBucaB2UrTZC9tAQZBdlOeZACcU9lwREUoC0jveSIZBWMZAOHazZByjSvJ2n7WEq6iCi90O6ZCGXJVz3iaNdROXnpJAZDZD",
     "BASIC_AUTH_USER": "admin",
-    "BASIC_AUTH_PASS": "3kjfd98djf!22?^",
-    "BASIC_AUTH_PASS_ENCODED": "3kjfd98djf!22%3F%5E",
+    "BASIC_AUTH_PASS": "letitbee22",
+    "BASIC_AUTH_PASS_ENCODED": "letitbee22",
     "SLACK_CHANNEL":"#missing-intents-local",
     "DBCONNECTION":"postgres://gddqadkdbhqglk:fddf01ad2ba2b7187ad98db52666b54b6e6dd5d8de71609a4a7f51c756197fc0@ec2-54-83-47-194.compute-1.amazonaws.com:5432/d92ipeeb382ic3"
 }
