@@ -24,6 +24,7 @@ function router(req, res) {
     * @api {POST} /apiai-webhook
     * @apiDescription Routes the requests comping from api.ai webhook fullfiliment
     */
+  console.log('req.body.result',req.body.originalRequest.data)
   const action = req.body.result.action;
   switch (action) {
     case 'wines-by-variance':
@@ -96,7 +97,7 @@ const sendMessage = (req, res, message) => {
   apiai_tmpl.data.facebook = [];
   apiai_tmpl.contextOut = [];
   apiai_tmpl.source = 'Monty'
-  fb.addTyping(apiai_tmpl.data.facebook, 5);
+  fb.addTyping(apiai_tmpl.data.facebook, 2);
   apiai_tmpl.data.facebook.push({
     text: message
   });
@@ -176,14 +177,14 @@ const _handleNotifyMissingIntent = (req, res) => {
           apiai_tmpl.data.facebook = [];
           apiai_tmpl.contextOut = [];
           apiai_tmpl.source = 'Monty'
-          fb.addTyping(apiai_tmpl.data.facebook, 5);
+          fb.addTyping(apiai_tmpl.data.facebook, 2);
           apiai_tmpl.data.facebook.push({
             text: `I'm on it.`
           });
           apiai_tmpl.data.facebook.push({
             text: `I'll get back to you ASAP! 🚀`
           });
-          fb.addTyping(apiai_tmpl.data.facebook, 5);
+          fb.addTyping(apiai_tmpl.data.facebook, 2);
           apiai_tmpl.data.facebook.push({
             text: `In the meantime, can I can help with something else?`,
             quick_replies: [
@@ -254,7 +255,7 @@ const _handleMissingIntents = (req, res) => {
   console.log(options)
   db.Intents.findAll(options)
     .then((results) => {
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
       apiai_tmpl.data.facebook.push({
         text: `🤔 Hmm. I don't have a match. Are any of these close, or shall I ask a sommelier?`
       });
@@ -285,7 +286,7 @@ const _handleMissingIntents = (req, res) => {
       ));
 
       var tmpl_generic = fb.getGenericTemplate(_tmp_cards);
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
       apiai_tmpl.data.facebook.push(tmpl_generic);
       res.setHeader('Content-Type', 'application/json');
       res.send(JSON.stringify(apiai_tmpl));
@@ -422,7 +423,7 @@ const _handleWinesByVariance = (req, res) => {
       apiai_tmpl.contextOut = [];
       apiai_tmpl.source = 'Monty'
 
-      fb.addTyping(apiai_tmpl.data.facebook, 10);
+      fb.addTyping(apiai_tmpl.data.facebook, 3);
 
       if (_tmp_cards.length == 1) {
         apiai_tmpl.data.facebook.push({
@@ -433,7 +434,7 @@ const _handleWinesByVariance = (req, res) => {
           text: `Here's some smashing wines that match your request`
         });
       }
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
 
       apiai_tmpl.data.facebook.push(tmpl);
 
@@ -533,20 +534,20 @@ const _handleGetVarietals = (req, res) => {
       apiai_tmpl.data.facebook = [];
       apiai_tmpl.contextOut = [];
       apiai_tmpl.source = 'Monty'
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
       apiai_tmpl.data.facebook.push(tmpl_image);
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
       apiai_tmpl.data.facebook.push({
         text: intent.bubble1
       });
 
       if (intent.bubble2 != null && intent.bubble2 != '') {
-        fb.addTyping(apiai_tmpl.data.facebook, 5);
+        fb.addTyping(apiai_tmpl.data.facebook, 2);
         apiai_tmpl.data.facebook.push({
           text: intent.bubble2
         });
       }
-      fb.addTyping(apiai_tmpl.data.facebook, 15);
+      fb.addTyping(apiai_tmpl.data.facebook, 3);
       apiai_tmpl.data.facebook.push(tmpl);
 
       res.setHeader('Content-Type', 'application/json');
@@ -597,16 +598,16 @@ const _handleVarietalLearning = (req, res) => {
       apiai_tmpl.source = 'Monty'
 
       if (query_params.step == 1) {
-        fb.addTyping(apiai_tmpl.data.facebook, 5);
+        fb.addTyping(apiai_tmpl.data.facebook, 2);
         apiai_tmpl.data.facebook.push(tmpl_image);
       }
       query_params.steps.forEach((step) => {
-        fb.addTyping(apiai_tmpl.data.facebook, 5);
+        fb.addTyping(apiai_tmpl.data.facebook, 2);
         apiai_tmpl.data.facebook.push({
           text: varietal[step]
         });
       });
-      fb.addTyping(apiai_tmpl.data.facebook, 5);
+      fb.addTyping(apiai_tmpl.data.facebook, 2);
       apiai_tmpl.data.facebook.push(tmpl_buttons);
       res.setHeader('Content-Type', 'application/json');
       res.send(JSON.stringify(apiai_tmpl));
