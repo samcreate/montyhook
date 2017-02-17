@@ -347,7 +347,7 @@ const _handleWinesByVariance = (req, res) => {
           for (let param in query_params.variance) {
             //console.log('queryparm: :', param, ':', query_params.variance[param])
             let _query_weight = query_params.variance[param];
-            _bottle_weight = _temp_bottle.attr[param].weight;
+            let _bottle_weight = _temp_bottle.attr[param].weight;
             //console.log('_temp_bottle.attr: :', param, ':', _temp_bottle.attr[param].weight)
             _temp_bottle.attr[param].score = stats.variance([_bottle_weight, _query_weight]);
           }
