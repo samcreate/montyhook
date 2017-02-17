@@ -388,9 +388,11 @@ const _handleWinesByVariance = (req, res) => {
       } else if (res_bottles.length > 10) {
         res_bottles = res_bottles.splice(0, 10);
       }
+      const _metals = ['🥇','🥈','🥉']
       res_bottles.forEach((res_bottle, i) => {
         let tmp_buttons = [];
         let wine = res_bottle.bottle.bottle;
+        let place = _metals[i] || '';
         tmp_buttons.push({
           "type": "web_url",
           "url": wine.url,
@@ -399,15 +401,14 @@ const _handleWinesByVariance = (req, res) => {
 
         //description for if there's a varaince applied on the selection
         //and one for not having a variance.
-        let place = numberToWord((i + 1))
-        let description = `${place} pick. ${wine.description}`;
+        let description = `${wine.description}`;
 
         if (query_params.variance === null) {
           description = `${wine.description}`
         }
 
         var tmp_card = fb.cardGen(
-          `${wine.vintage} ${wine.producer}, ${wine.Varietals.name} ${wine.name}`,
+          `${place} ${wine.vintage} ${wine.producer}, ${wine.Varietals.name} ${wine.name}`,
           wine.hero_gallery || '',
           description || '',
           tmp_buttons
