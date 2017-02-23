@@ -7,12 +7,22 @@ import request from'request';
 import stats from '../util/statistics';
 import numberToWord from '../util/number-to-word';
 import db from 'montydb';
-
-
+import BootBot from 'bootbot';
 
 const slack = new Slack(config.get('SLACKYPOO'));
 let publicFields = '-__v -password';
 
+
+const bot = new BootBot({
+  accessToken: config.get('FBACCESSTOKEN'),
+  verifyToken: 'verify_this_biotch',
+  appSecret: 'd72e85f0a433b179925473bf431df2fd'
+});
+
+bot.on('message', (payload, chat) => {
+    const text = payload.message.text;
+    console.log(`The user said: ${text}`);
+});
 
 module.exports = {
   test,

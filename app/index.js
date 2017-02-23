@@ -1,42 +1,28 @@
-import express from 'express';
-import morgan from 'morgan';
-import bodyParser from 'body-parser';
-import compress from 'compression';
-import methodOverride from 'method-override';
-import multer from 'multer';
-import routes from './routers.js';
-import shell from 'shell-arguments';
-import {server} from '../config';
+import config from 'config';
+import BootBot from 'bootbot';
+import cookieParser from 'cookie-parser';
+import cookieSession from 'cookie-session';
 
-let app = express();
+const bot = new BootBot({
+  accessToken: config.get('FBACCESSTOKEN'),
+  verifyToken: 'verify_this_biotch',
+  appSecret: 'd72e85f0a433b179925473bf431df2fd'
+});
 
-app.set('env', shell.env || process.env.NODE_ENV || 'production');
-app.set('port', process.env.PORT || server.port);
-
-if (app.get('env') === 'development') {
-  app.use(morgan('dev'));
-}
-
-
-
-app
-  .use(compress())
-  .use(methodOverride())
-  .use(multer().array())
-  .use(bodyParser.urlencoded({extended: true}))
-  .use(bodyParser.json())
-  .use('/', routes.api);
-
-
-function startServer() {
-  app.listen(app.get('port'), logStartServer);
-
-  function logStartServer() {
-    if (app.get('env') !== 'test') {
-      console.log('> localhost:' + app.get('port'));
-    }
-  }
-}
-
-startServer();
-module.exports = app;
+bot.on('message', (payload, chat) => {
+    const text = payload.message.text;
+    console.log(`The user said: ${text}`, payload);
+});
+bot.app.use(cookieParser('khfe984375rsdfkhds'));
+bot.app.use(cookieSession({
+  name: 'session',
+  keys: ['khfe984375rsdfkhds22'],
+  maxAge: 24 * 60 * 60 * 1000,
+  secureProxy: true
+}));
+bot.app.use(function printSession(req, res, next) {
+  console.log('req.session', req.session);
+  return next();
+});
+console.log(bot.app)
+bot.start();
