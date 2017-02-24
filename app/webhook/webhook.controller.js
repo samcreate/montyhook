@@ -458,7 +458,6 @@ const _handleWinesByVariance = (req, res) => {
 const _handleGetVarietals = (req, res) => {
   const _intent_id = req.body.result.parameters.intent_id;
 
-
   db.Intents.findById(_intent_id, {
     include: [{
       model: db.Varietals
@@ -473,7 +472,7 @@ const _handleGetVarietals = (req, res) => {
       intent.BaseAttributes.forEach((attr) => {
         wine_params[attr.name] = attr.IntentsAttributes.weight;
       })
-      let cards = [];
+
       intent.Varietals = intent.Varietals.splice(0, 9);
       intent.Varietals.forEach((varietal) => {
 
