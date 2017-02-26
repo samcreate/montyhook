@@ -3,7 +3,7 @@ import BootBot from 'bootbot';
 import APIAI from './api-ai';
 import db from 'montydb';
 import fb from './util/facebook';
-import varietalPluralizer from './util/varietal-plural';
+import postBacks from './post-back-handlers';
 
 const bot = new BootBot({
   accessToken: config.get('FBACCESSTOKEN'),
@@ -20,17 +20,34 @@ bot.on('message', (payload, chat) => {
     text
   })
     .then(handleResponse);
-// chat.say(text);
+});
+
+bot.on('postback', (payload, chat) => {
+  let buttonData = payload.postback.payload;
+  let uid = payload.sender.id;
+  let queryParams = buttonData.split('~')[1];
+      queryParams = JSON.parse(queryParams);
+  console.log(uid);
+  if (buttonData.indexOf('SHOPBY_VARIETAL') !== -1){
+    console.log('test: SHOPBY_VARIETAL');
+    postBacks.shopbyVarietal({queryParams, uid})
+    .then(handleResponse);
+  }
+  if (buttonData.indexOf('VARIETAL_LEARNMORE') !== -1){
+    postBacks.shopbyVarietal({queryParams, uid})
+    .then(handleResponse);
+  }
 });
 
 bot.setGetStartedButton((payload, chat) => {
   const uid = payload.sender.id;
   APIAI.get({
     uid,
-    text: 'Get Started'
+    text: 'Get Started',
   })
     .then(handleResponse);
 });
+
 
 
 APIAI.on('get-varietals', (originalRequest, apiResponse) => {
