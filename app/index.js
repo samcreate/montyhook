@@ -11,7 +11,7 @@ const slack = new Slack(config.get('SLACKYPOO'));
 const bot = new BootBot({
   accessToken: config.get('FBACCESSTOKEN'),
   verifyToken: 'verify_this_biotch',
-  appSecret: 'd72e85f0a433b179925473bf431df2fd',
+  appSecret: config.get('FBAPPSECRET'),
 });
 
 bot.on('message', (payload, chat) => {
