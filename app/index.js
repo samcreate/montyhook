@@ -365,4 +365,4 @@ const errorHandler = (({err, uid}) => {
   });
 });
 
-bot.start();
+bot.start( process.env.PORT || 3000 );
