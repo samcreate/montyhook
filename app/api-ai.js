@@ -12,6 +12,17 @@ class ApiGet extends EventEmitter {
     });
   }
 
+  triggerIntent({uid, intent_id}) {
+    this.emit('get-varietals', {
+      uid,
+      text: '',
+    }, {
+      result: {
+        parameters: {intent_id},
+      },
+    });
+  }
+
   get({uid, text}) {
     return new Promise((resolve, reject) => {
       this.apiai.textRequest(text, {
@@ -21,7 +32,10 @@ class ApiGet extends EventEmitter {
         console.log(response);
 
         if (response.result.action !== '' && response.result.action !== 'input.welcome') {
-          this.emit(response.result.action, {uid, text}, response);
+          this.emit(response.result.action, {
+            uid,
+            text
+          }, response);
         } else {
           resolve({
             uid,
