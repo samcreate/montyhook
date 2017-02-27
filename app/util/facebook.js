@@ -1,5 +1,6 @@
 var config = require('config');
 var fetch = require('node-fetch');
+import request from 'request';
 var fb = {}
 
   var normalizeString = (str) => (
@@ -182,6 +183,25 @@ var fb = {}
     })
       .then(res => res.json())
       // .catch(err => console.log(`Error sending message: ${err}`));
+  }
+
+  fb.getUserData = ({uid}) => {
+    let fb_url = `https://graph.facebook.com/${uid}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=${config.get('FBACCESSTOKEN')}`;
+    return new Promise((resolve, reject) => {
+      request.get({
+        url: fb_url,
+      }, function(error, response, body) {
+        body = JSON.parse(body)
+        body.fullname = `${body.first_name} ${body.last_name}`
+        body.id = uid;
+        if (body.hasOwnProperty('first_name')) {
+          resolve(body);
+        } else {
+          reject('FACEBOOK NAME FAILED')
+        }
+
+      });
+    })
   }
 
   module.exports = fb;

@@ -7,12 +7,22 @@ import request from'request';
 import stats from '../util/statistics';
 import numberToWord from '../util/number-to-word';
 import db from 'montydb';
-
-
+import BootBot from 'bootbot';
 
 const slack = new Slack(config.get('SLACKYPOO'));
 let publicFields = '-__v -password';
 
+
+const bot = new BootBot({
+  accessToken: config.get('FBACCESSTOKEN'),
+  verifyToken: 'verify_this_biotch',
+  appSecret: 'd72e85f0a433b179925473bf431df2fd'
+});
+
+bot.on('message', (payload, chat) => {
+    const text = payload.message.text;
+    console.log(`The user said: ${text}`);
+});
 
 module.exports = {
   test,
@@ -448,7 +458,6 @@ const _handleWinesByVariance = (req, res) => {
 const _handleGetVarietals = (req, res) => {
   const _intent_id = req.body.result.parameters.intent_id;
 
-
   db.Intents.findById(_intent_id, {
     include: [{
       model: db.Varietals
@@ -463,7 +472,7 @@ const _handleGetVarietals = (req, res) => {
       intent.BaseAttributes.forEach((attr) => {
         wine_params[attr.name] = attr.IntentsAttributes.weight;
       })
-      let cards = [];
+
       intent.Varietals = intent.Varietals.splice(0, 9);
       intent.Varietals.forEach((varietal) => {
 
