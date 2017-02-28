@@ -14,7 +14,7 @@ const bot = new BootBot({
   appSecret: config.get('FBAPPSECRET'),
 });
 
-bot.on('message', (payload, chat) => {
+bot.on('message', (payload) => {
   const text = payload.message.text;
   const uid = payload.sender.id;
   //console.log(`The user said: ${text}`, uid);
@@ -25,7 +25,7 @@ bot.on('message', (payload, chat) => {
     .then(handleResponse);
 });
 
-bot.on('postback', (payload, chat) => {
+bot.on('postback', (payload) => {
   let buttonData = payload.postback.payload;
   if (buttonData === 'BOOTBOT_GET_STARTED') {
     return;
@@ -67,9 +67,25 @@ bot.on('postback', (payload, chat) => {
       .catch(errorHandler);
   }
 
+  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 ){
+    APIAI.get({
+      uid,
+      text: buttonData,
+    })
+      .then(handleResponse);
+  }
+
+  if (buttonData.indexOf('SHARE_MONTY') !== -1) {
+    postBacks.shareMonty({
+      queryParams,
+      uid,
+    })
+      .then(handleResponse)
+      .catch(errorHandler);
+  }
 });
 
-bot.setGetStartedButton((payload, chat) => {
+bot.setGetStartedButton((payload) => {
   const uid = payload.sender.id;
   APIAI.get({
     uid,
@@ -78,6 +94,24 @@ bot.setGetStartedButton((payload, chat) => {
     .then(handleResponse)
     .catch(errorHandler);
 });
+
+bot.setPersistentMenu([
+  {
+    type: 'postback',
+    title: '🍷 Find a wine',
+    payload: 'FIND_A_WINE~{}',
+  },
+  {
+    type: 'postback',
+    title: '🤖 How it works',
+    payload: 'HOW_IT_WORKS~{}',
+  },
+  {
+    type: 'postback',
+    title: '🙌 Share Monty',
+    payload: 'SHARE_MONTY~{}',
+  },
+]);
 
 APIAI.on('missing-intent', (originalRequest, apiResponse) => {
   //console.log('_handleMissingIntents', originalRequest, apiResponse);
@@ -119,9 +153,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           intent.bubble1 || '',
           [{
             'type': 'postback',
-            'payload': 'SHOW_INTENT~' + JSON.stringify({
-                intent_id: intent.id
-              }),
+            'payload': 'SHOW_INTENT~' + JSON.stringify({intent_id: intent.id}),
             'title': 'See more 👀',
           }]
         ));
@@ -133,9 +165,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
         'If none of these are close enough, I can ask a sommelier',
         [{
           'type': 'postback',
-          'payload': 'SOMMELIER~' + JSON.stringify({
-              missedIntent: missedMsg
-            }),
+          'payload': 'SOMMELIER~' + JSON.stringify({missedIntent: missedMsg}),
           'title': 'Ask a sommelier 🛎',
         }]
       ));

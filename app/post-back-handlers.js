@@ -11,6 +11,31 @@ class PostBacksHandler extends EventEmitter {
     this.slack = new Slack(config.get('SLACKYPOO'));
   }
 
+  shareMonty({queryParams, uid}) {
+    return new Promise((resolve, reject) => {
+      let tmplButtons = [];
+      let cards = [];
+      tmplButtons.push({
+        'type': 'element_share',
+      });
+      cards.push(fb.cardGen(
+        'Share Monty.',
+        'http://bit.ly/2mBDxtF',
+        'A bot who also happens to be a wine expert.',
+        tmplButtons
+      ));
+      resolve({
+        uid,
+        messages: [
+          {
+            cards,
+            type: 1,
+          },
+        ],
+      });
+    });
+  }
+
   notifySommelier({queryParams, uid}) {
     let fbData;
     let _messages = [];
@@ -87,7 +112,7 @@ class PostBacksHandler extends EventEmitter {
               _messages.push({
                 type: 2,
                 title: 'In the meantime, can I can help with something else?',
-                replies: ['🍷 Find a wine','🤖 How it works'],
+                replies: ['🍷 Find a wine', '🤖 How it works'],
               });
 
               resolve({
@@ -95,7 +120,7 @@ class PostBacksHandler extends EventEmitter {
                 messages: _messages,
               });
             })
-            .catch((err)=>{
+            .catch((err) => {
               reject({
                 err,
                 uid,
