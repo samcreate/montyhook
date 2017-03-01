@@ -67,7 +67,7 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
 
-  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 ){
+  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 || buttonData.indexOf('ABOUT_MONTYS_PICKS') !== -1){
     APIAI.get({
       uid,
       text: buttonData,
@@ -248,7 +248,7 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
           },
             {
               'type': 'postback',
-              'payload': 'About Monty\'s Picks',
+              'payload': 'ABOUT_MONTYS_PICKS~{}',
               'title': 'About Monty\'s Picks',
             }]
         )
