@@ -11,6 +11,7 @@ class PostBacksHandler extends EventEmitter {
     this.slack = new Slack(config.get('SLACKYPOO'));
   }
 
+
   shareMonty({queryParams, uid}) {
     return new Promise((resolve, reject) => {
       let tmplButtons = [];
