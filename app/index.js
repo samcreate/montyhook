@@ -6,8 +6,8 @@ import fb from './util/facebook';
 import postBacks from './post-back-handlers';
 import Slack from 'slack-node';
 
-const slack = new Slack(config.get('SLACKYPOO'));
 
+const slack = new Slack(config.get('SLACKYPOO'));
 const bot = new BootBot({
   accessToken: config.get('FBACCESSTOKEN'),
   verifyToken: 'verify_this_biotch',
@@ -24,7 +24,6 @@ bot.on('message', (payload) => {
   })
     .then(handleResponse);
 });
-
 bot.on('postback', (payload) => {
   let buttonData = payload.postback.payload;
   if (buttonData === 'BOOTBOT_GET_STARTED') {
@@ -33,7 +32,7 @@ bot.on('postback', (payload) => {
   let uid = payload.sender.id;
   let queryParams = buttonData.split('~')[1];
   queryParams = JSON.parse(queryParams);
-  if (buttonData.indexOf('SHOPBY_VARIETAL') !== -1 || buttonData.indexOf('SHOPBY_ALL') !== -1) {
+  if (buttonData.indexOf('SHOPBY_VARIETAL') !== -1 ) {
     postBacks.shopbyVarietal({
       queryParams,
       uid,
@@ -41,6 +40,16 @@ bot.on('postback', (payload) => {
       .then(handleResponse)
       .catch(errorHandler);
   }
+  if (buttonData.indexOf('SHOPBY_ALL') !== -1) {
+    postBacks.shopbyVarietalAll({
+      queryParams,
+      uid,
+    })
+      .then(handleResponse)
+      .catch(errorHandler);
+  }
+
+
   if (buttonData.indexOf('VARIETAL_LEARNMORE') !== -1) {
     //console.log('VARIETAL_LEARNMORE', queryParams);
     postBacks.varietalLearning({
@@ -84,7 +93,6 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
 });
-
 bot.setGetStartedButton((payload) => {
   const uid = payload.sender.id;
   APIAI.get({
@@ -94,7 +102,6 @@ bot.setGetStartedButton((payload) => {
     .then(handleResponse)
     .catch(errorHandler);
 });
-
 bot.setPersistentMenu([
   {
     type: 'postback',
@@ -312,7 +319,6 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     });
 });
 
-
 const handleResponse = ({uid, messages}) => {
   let {type, speech, replies, title, cards, imageUrl, buttons} = messages.shift();
   let promise;
@@ -369,7 +375,6 @@ const handleResponse = ({uid, messages}) => {
     });
   }
 };
-
 const errorHandler = (({err, uid}) => {
   let _errorMessages = [
     '😳 Oops. I scrambled my hard drive. Try again and I promise to do better.',
