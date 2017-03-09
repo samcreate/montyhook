@@ -5,7 +5,8 @@ import db from 'montydb';
 import fb from './util/facebook';
 import postBacks from './post-back-handlers';
 import Slack from 'slack-node';
-
+import propLookUp from './util/property-lookup';
+import stats from './util/statistics';
 
 const slack = new Slack(config.get('SLACKYPOO'));
 const bot = new BootBot({
@@ -32,7 +33,7 @@ bot.on('postback', (payload) => {
   let uid = payload.sender.id;
   let queryParams = buttonData.split('~')[1];
   queryParams = JSON.parse(queryParams);
-  if (buttonData.indexOf('SHOPBY_VARIETAL') !== -1 ) {
+  if (buttonData.indexOf('SHOPBY_VARIETAL') !== -1) {
     postBacks.shopbyVarietal({
       queryParams,
       uid,
@@ -76,7 +77,7 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
 
-  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 || buttonData.indexOf('ABOUT_MONTYS_PICKS') !== -1){
+  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 || buttonData.indexOf('ABOUT_MONTYS_PICKS') !== -1) {
     APIAI.get({
       uid,
       text: buttonData,
@@ -120,6 +121,240 @@ bot.setPersistentMenu([
   },
 ]);
 
+
+
+APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
+  let {locations, vintage, properties, styles, varietals, type} = apiResponse.result.parameters;
+  let tmpYear = vintage || '';
+  let $locOR = [];
+  let $varOR = [];
+  let dessertBool = [false, true];
+  let sparklingBool = [false, true];
+  let fortifiedBool = [false, true];
+  let naturalBool = [false, true];
+  let types = ['white', 'red', 'rose', 'sparkling', 'dessert'];
+
+  vintage = `%${tmpYear}%`;
+  varietals = varietals || [''];
+  locations = locations || [''];
+
+  if (type.length < 1) {
+    type = types;
+  }
+
+  properties = properties.map(prop => {
+    let newProp = {};
+    prop = prop.toLowerCase();
+    newProp.variance = propLookUp[prop];
+    return newProp;
+  });
+  console.log('properties-->', properties);
+  styles.forEach((style) => {
+    if (style === 'Dessert') {
+      dessertBool = true;
+    }
+    if (style === 'Sparkling') {
+      sparklingBool = true;
+    }
+    if (style === 'Fortified') {
+      fortifiedBool = true;
+    }
+    if (style === 'Organic') {
+      naturalBool = true;
+    }
+  });
+
+  locations.forEach((loc) => {
+    $locOR.push(
+      {
+        $iLike: `%${loc}%`,
+      }
+    );
+  });
+  varietals.forEach((varietal) => {
+    $varOR.push(
+      {
+        $iLike: `%${varietal}%`,
+      }
+    );
+  });
+
+
+  db.Wines.findAll({
+    include: [
+      {
+        model: db.Varietals,
+        as: 'Varietals',
+      },
+      {
+        model: db.Locations,
+      },
+      {
+        model: db.BaseAttributes,
+        where: {
+          type: 'wine-attr',
+        },
+      },
+    ],
+    where: {
+      $or: [
+        {
+          '$Varietals.name$': {
+            $or: $varOR,
+          },
+          '$Locations.name$': {
+            $or: $locOR,
+          },
+          vintage: {
+            like: vintage,
+          },
+          dessert: dessertBool,
+          sparkling: sparklingBool,
+          fortified: fortifiedBool,
+          natural: naturalBool,
+          type: type,
+        },
+      ],
+    },
+  })
+    .then((bottles) => {
+      //
+      console.log('How many: -->', bottles.length);
+      let resBottles = [];
+      //console.log('Sample: -->',bottles[0].BaseAttributes);
+      bottles.forEach((bottle) => {
+        //console.log(bottle.name, bottle.id);
+      });
+
+      if (properties.length >= 1) {
+        console.log('wines going through scoring process')
+        bottles.forEach((bottle) => {
+          let _tmpBottle = {};
+          _tmpBottle.bottle = bottle.get({
+            raw: true,
+          });
+          _tmpBottle.attr = {};
+          //filter the the weight result since it's somewhat barried in the reponse from sequelize
+          bottle.BaseAttributes.forEach((attr) => {
+            // console.log(attr.name, attr.WinesAttributes.weight)
+            _tmpBottle.attr[attr.name] = {
+              weight: attr.WinesAttributes.weight,
+              score: null,
+            };
+          });
+          let _scoreTotal = 0;
+          // let's get the variance score of each taste profile attribute
+          // comparing the incoming to the wines in the db
+          for (let param in properties[0].variance) {
+            // console.log('queryparm: :', param, ':', properties[0].variance);
+            let _queryWeight =  properties[0].variance[param];
+            let _bottleWeight = _tmpBottle.attr[param].weight;
+            //console.log('_tmpBottle.attr: :', param, ':', _tmpBottle.attr[param].weight)
+            _tmpBottle.attr[param].score = stats.variance([_bottleWeight, _queryWeight]);
+          }
+
+          //tally the score per bottle
+
+          for (let param in _tmpBottle.attr) {
+            _scoreTotal += _tmpBottle.attr[param].score;
+
+          }
+
+          _tmpBottle.total = _scoreTotal;
+          resBottles.push({
+            bottle: _tmpBottle.bottle,
+            score: _scoreTotal,
+          });
+
+        });
+        //sort the scores from least to greatest
+        resBottles = resBottles.sort(function(a, b) {
+          return a.score - b.score;
+        });
+        resBottles = resBottles.map(el => {
+          return el.bottle;
+        });
+      } else {
+        resBottles = bottles.map(el =>{
+          return el.get({plain: true});
+        });
+      }
+
+      resBottles = resBottles.splice(0, 10);
+
+      if (resBottles.length < 1) {
+
+        slack.api('chat.postMessage', {
+          text: `No Stock or match found for user's request: ${originalRequest.text}`,
+          username: 'Monty\'s Pager',
+          icon_emoji: ':pager:',
+          channel: config.get('SLACK_CHANNEL'),
+        }, function(err, response) {
+          console.log('slack.api', response, err, config.get('SLACKYPOO'));
+        });
+        let lowStockMessage = {
+          speech: 'I\'m sorry we currently don\'t have anything instock that meets your request.',
+          type: 0,
+        };
+        handleResponse({
+          uid: originalRequest.uid,
+          messages: [lowStockMessage],
+        });
+
+        return false;
+      }
+
+      const _metals = ['🥇', '🥈', '🥉'];
+      let _tmpCards = [];
+      resBottles.forEach((wine, i) => {
+        let tmpButtons = [];
+        let place = _metals[i] || '';
+        tmpButtons.push({
+          'type': "web_url",
+          'url': wine.url,
+          'title': `Shop at ${wine.price}`,
+        });
+
+        //description for if there's a varaince applied on the selection
+        //and one for not having a variance.
+        let description = `${wine.description}`;
+
+        let tmpCard = fb.cardGen(
+          `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
+          wine.hero_gallery || '',
+          description || '',
+          tmpButtons
+        );
+
+        _tmpCards.push(tmpCard);
+      });
+
+      let _tmpSpeech;
+      if (_tmpCards.length === 1) {
+        _tmpSpeech = 'Here\'s a smashing wine that matches your request';
+      } else {
+        _tmpSpeech = 'Here\'s some smashing wines that match your request';
+      }
+
+      handleResponse({
+        uid: originalRequest.uid,
+        messages: [
+          {
+            speech: _tmpSpeech,
+            type: 0,
+          },
+          {
+            cards: _tmpCards,
+            type: 1,
+          },
+        ],
+      });
+    })
+    .catch((err) => {
+      console.log('error', err);
+    });
+
+});
 APIAI.on('missing-intent', (originalRequest, apiResponse) => {
   //console.log('_handleMissingIntents', originalRequest, apiResponse);
 
@@ -160,7 +395,9 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           intent.bubble1 || '',
           [{
             'type': 'postback',
-            'payload': 'SHOW_INTENT~' + JSON.stringify({intent_id: intent.id}),
+            'payload': 'SHOW_INTENT~' + JSON.stringify({
+                intent_id: intent.id
+              }),
             'title': 'See more 👀',
           }]
         ));
@@ -172,7 +409,9 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
         'If none of these are close enough, I can ask a sommelier',
         [{
           'type': 'postback',
-          'payload': 'SOMMELIER~' + JSON.stringify({missedIntent: missedMsg}),
+          'payload': 'SOMMELIER~' + JSON.stringify({
+              missedIntent: missedMsg
+            }),
           'title': 'Ask a sommelier 🛎',
         }]
       ));
@@ -400,4 +639,4 @@ const errorHandler = (({err, uid}) => {
   });
 });
 
-bot.start( process.env.PORT || 3000 );
+bot.start(process.env.PORT || 3000);
