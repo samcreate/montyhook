@@ -85,8 +85,8 @@ bot.on('postback', (payload) => {
       .then(handleResponse)
       .catch(errorHandler);
   }
-
-  if (buttonData.indexOf('FIND_A_WINE') !== -1 || buttonData.indexOf('HOW_IT_WORKS') !== -1 || buttonData.indexOf('ABOUT_MONTYS_PICKS') !== -1) {
+  console.log('here',buttonData)
+  if (['FIND_WINEBY_STYLE', 'EXPLORE_VARIETALS', 'HELP', 'FIND_A_WINE','HOW_IT_WORKS','ABOUT_MONTYS_PICKS'].indexOf(buttonData.split('~')[0]) !== -1) {
     APIAI.get({
       uid,
       text: buttonData,
@@ -115,18 +115,28 @@ bot.setGetStartedButton((payload) => {
 bot.setPersistentMenu([
   {
     type: 'postback',
-    title: '🍷 Find a wine',
+    title: '🍷 Pair wine',
     payload: 'FIND_A_WINE~{}',
   },
   {
     type: 'postback',
-    title: '🤖 How it works',
-    payload: 'HOW_IT_WORKS~{}',
+    title: '🍇 Explore varietals',
+    payload: 'EXPLORE_VARIETALS~{}',
+  },
+  {
+    type: 'postback',
+    title: '🍾 Find wine by style',
+    payload: 'FIND_WINEBY_STYLE~{}',
   },
   {
     type: 'postback',
     title: '🙌 Share Monty',
     payload: 'SHARE_MONTY~{}',
+  },
+  {
+    type: 'postback',
+    title: '🆘 Help',
+    payload: 'HELP~{}',
   },
 ]);
 
