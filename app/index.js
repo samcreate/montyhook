@@ -85,7 +85,6 @@ bot.on('postback', (payload) => {
       .then(handleResponse)
       .catch(errorHandler);
   }
-  console.log('here',buttonData)
   if (['FIND_WINEBY_STYLE', 'EXPLORE_VARIETALS', 'HELP', 'FIND_A_WINE','HOW_IT_WORKS','ABOUT_MONTYS_PICKS'].indexOf(buttonData.split('~')[0]) !== -1) {
     APIAI.get({
       uid,

@@ -19,12 +19,14 @@ class PostBacksHandler extends EventEmitter {
       tmplButtons.push({
         'type': 'element_share',
       });
-      cards.push(fb.cardGen(
-        'Share Monty.',
-        'http://bit.ly/2mBDxtF',
-        'A bot who also happens to be a wine expert.',
-        tmplButtons
-      ));
+
+      cards.push({
+        title: 'Share Monty.',
+        image_url: 'http://bit.ly/2mBDxtF',
+        subtitle: 'A bot who also happens to be a wine expert.',
+        item_url: 'https://www.messenger.com/t/montysips',
+        buttons: tmplButtons,
+      });
       resolve({
         uid,
         messages: [
@@ -318,12 +320,14 @@ class PostBacksHandler extends EventEmitter {
               description = `${wine.description}`;
             }
 
-            let tmpCard = fb.cardGen(
-              `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-              wine.hero_gallery || '',
-              description || '',
-              tmpButtons
-            );
+
+            let tmpCard = {
+              title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
+              image_url: wine.hero_gallery || '',
+              subtitle: description || '',
+              item_url: wine.url,
+              buttons: tmpButtons,
+            };
 
             _tmpCards.push(tmpCard);
           });
