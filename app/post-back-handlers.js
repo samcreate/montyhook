@@ -48,7 +48,7 @@ class PostBacksHandler extends EventEmitter {
         .then((user) => {
           fbData = user;
           return db.PastConversation.create({
-            body: _missedMsg,
+            body: {queryParams, uid},
           });
         })
         .then((pastConvo) => {

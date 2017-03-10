@@ -68,6 +68,15 @@ bot.on('postback', (payload) => {
     });
   }
 
+  if (buttonData.indexOf('MISSINGINTENT_FOLLOWUP') !== -1) {
+    let {text} = queryParams;
+    APIAI.get({
+      uid,
+      text,
+    })
+      .then(handleResponse);
+  }
+
   if (buttonData.indexOf('SOMMELIER') !== -1) {
     postBacks.notifySommelier({
       queryParams,
