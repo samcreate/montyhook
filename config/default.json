@@ -21,5 +21,7 @@
     "BASIC_AUTH_PASS_ENCODED": "letitbee22",
     "SLACK_CHANNEL":"#missing-intents-local",
     "SLACK_CHANNEL_ERROR":"#monty-errors",
-    "DBCONNECTION":"postgres://gddqadkdbhqglk:fddf01ad2ba2b7187ad98db52666b54b6e6dd5d8de71609a4a7f51c756197fc0@ec2-54-83-47-194.compute-1.amazonaws.com:5432/d92ipeeb382ic3"
+    "DBCONNECTION":"postgres://gddqadkdbhqglk:fddf01ad2ba2b7187ad98db52666b54b6e6dd5d8de71609a4a7f51c756197fc0@ec2-54-83-47-194.compute-1.amazonaws.com:5432/d92ipeeb382ic3",
+    "REDIS": "redis://localhost:6379",
+    "CACHE_TIME": 120
 }

@@ -4,6 +4,8 @@ import db from 'montydb';
 import stats from './util/statistics';
 import fb from './util/facebook';
 import Slack from 'slack-node';
+import cacher from 'sequelize-redis-cache';
+
 
 class PostBacksHandler extends EventEmitter {
   constructor() {
@@ -136,7 +138,10 @@ class PostBacksHandler extends EventEmitter {
 
   varietalLearning({queryParams, uid}) {
     return new Promise((resolve, reject) => {
-      db.Varietals.findById(queryParams.varietal_id)
+      let cacheObj = cacher(db.sequelize, redisCache)
+        .model('Varietals')
+        .ttl(config.get('CACHE_TIME'));
+      cacheObj.findById(queryParams.varietal_id)
         .then((varietal) => {
           let tmplButtons = [];
 
@@ -201,20 +206,34 @@ class PostBacksHandler extends EventEmitter {
   }
 
   shopbyVarietal({queryParams, uid}) {
+    let tmpReject;
+    //config.get('CACHE_TIME')
     return new Promise((resolve, reject) => {
-      db.WinesVarietals.findAll({
+      tmpReject = reject;
+      let WinesVarietalsQRY = cacher(db.sequelize, redisCache)
+        .model('WinesVarietals')
+        .ttl(3600);
+      WinesVarietalsQRY.findAll({
         where: {
           VarietalId: queryParams.varietal_id,
         },
       })
         .then((wines) => {
           let wineIDs = [];
+          if( Object.prototype.toString.call( wines ) === '[object Array]' ) {
+              console.log( 'Array!' );
+          }
+          console.log('@@@@@ WinesVarietalsQRY2',WinesVarietalsQRY.cacheHit);
+          console.log('@@@@@ hereeeeee 2', wines);
 
           wines.forEach((wine) => {
             wineIDs.push(wine.WineId);
           });
           console.log('wineIDs', wineIDs,queryParams.varietal_id);
-          return db.Wines.findAll({
+          let WinesQY = cacher(db.sequelize, redisCache)
+            .model('Wines')
+            .ttl(config.get('CACHE_TIME'));
+          return WinesQY.findAll({
             where: {
               id: wineIDs,
             },
@@ -234,9 +253,7 @@ class PostBacksHandler extends EventEmitter {
           let resBottles = [];
           bottles.forEach((bottle) => {
             let _tmpBottle = {};
-            _tmpBottle.bottle = bottle.get({
-              raw: true,
-            });
+            _tmpBottle.bottle = bottle;
             _tmpBottle.attr = {};
             //filter the the weight result since it's somewhat barried in the reponse from sequelize
             bottle.BaseAttributes.forEach((attr) => {
@@ -353,7 +370,14 @@ class PostBacksHandler extends EventEmitter {
             ],
           });
         });
-    });
+    })
+    .catch((err)=>{
+      console.log('err: ', err);
+      tmpReject({
+        err,
+        uid,
+      });
+    })
   }
 
   shopbyVarietalAll({queryParams, uid}) {
@@ -378,14 +402,15 @@ class PostBacksHandler extends EventEmitter {
       };
     }
     return new Promise((resolve, reject) => {
-      db.Wines.findAll(_options)
+      let WinesQY = cacher(db.sequelize, redisCache)
+        .model('Wines')
+        .ttl(config.get('CACHE_TIME'));
+      WinesQY.findAll(_options)
         .then((bottles) => {
           let resBottles = [];
           bottles.forEach((bottle) => {
             let _tmpBottle = {};
-            _tmpBottle.bottle = bottle.get({
-              raw: true,
-            });
+            _tmpBottle.bottle = bottle;
             _tmpBottle.attr = {};
             //filter the the weight result since it's somewhat barried in the reponse from sequelize
             bottle.BaseAttributes.forEach((attr) => {
@@ -502,9 +527,10 @@ class PostBacksHandler extends EventEmitter {
           });
         })
         .catch((err) => {
+          console.log('FUCK YOUUUUUU')
           reject({
             err,
-            uid
+            uid,
           });
         });
     });

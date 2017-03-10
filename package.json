@@ -39,9 +39,11 @@
     "nodemon": "^1.11.0",
     "pg": "^6.1.2",
     "pg-native": "^1.10.0",
+    "redis": "^2.6.5",
     "request": "^2.79.0",
     "require-all": "^2.0.0",
     "sequelize": "^3.30.2",
+    "sequelize-redis-cache": "https://github.com/samcreate/sequelize-redis-cache/tarball/master",
     "serve-favicon": "^2.3.0",
     "shell-arguments": "^1.0.4",
     "slack-node": "^0.1.8"

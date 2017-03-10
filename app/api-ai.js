@@ -18,9 +18,13 @@ class ApiGet extends EventEmitter {
       text: '',
     }, {
       result: {
-        parameters: {intent_id},
+        parameters: {intent_id: [intent_id]},
       },
     });
+  }
+
+  triggerMissingIntent(originalRequest, apiResponse) {
+    this.emit('missing-intent', originalRequest, apiResponse);
   }
 
   get({uid, text}) {

@@ -5,5 +5,6 @@
     "FBACCESSTOKEN": "EAALmwut1We0BABzjnSojSnQvyd8Q4GDzTm43xfrUajmVay3dDSrHgMNdy5ZCSU8SSVZCVzIdAbxIXpsWKGmRlb4X6axdzJLZAZApM0mulsp91h5RGMR1xd6iZC4HSsrhCipeFWqqqJvCulZCZBPI9cYwZBfkcp6ClrVImSVzh3Fx4QZDZD",
     "FBAPPSECRET": "f0a4f282835b49bf11ceaf8999204a61",
     "SLACK_CHANNEL":"#missing-intents",
-    "DBCONNECTION":"postgres://u32q8brcachf6o:pe012718f56e03f2a7e7dad4115ab3af26097559ba1bd637679a033e37d0cb9b8@ec2-34-200-68-201.compute-1.amazonaws.com:5432/dbcs8fq4aq7j4g"
+    "DBCONNECTION":"postgres://u32q8brcachf6o:pe012718f56e03f2a7e7dad4115ab3af26097559ba1bd637679a033e37d0cb9b8@ec2-34-200-68-201.compute-1.amazonaws.com:5432/dbcs8fq4aq7j4g",
+    "REDIS": "redis://h:pe4a1d708666a37d93ddc371d32cac397476c0b51db84110fa8a92af0d8db418f@ec2-34-199-108-154.compute-1.amazonaws.com:9309"
 }

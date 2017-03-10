@@ -7,6 +7,14 @@ import postBacks from './post-back-handlers';
 import Slack from 'slack-node';
 import propLookUp from './util/property-lookup';
 import stats from './util/statistics';
+import redis from 'redis';
+import cacher from 'sequelize-redis-cache';
+
+global.redisCache = redis.createClient(config.get('REDIS'));
+
+redisCache.on('error', (err)=>{
+  console.log('err: ', err);
+});
 
 const slack = new Slack(config.get('SLACKYPOO'));
 const bot = new BootBot({
@@ -198,7 +206,10 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   });
 
 
-  db.Wines.findAll({
+  let cacheObj = cacher(db.sequelize, redisCache)
+    .model('Wines')
+    .ttl(config.get('CACHE_TIME'));
+  cacheObj.findAll({
     include: [
       {
         model: db.Varietals,
@@ -238,19 +249,14 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     .then((bottles) => {
       //
       console.log('How many: -->', bottles.length);
+      console.log('Cached?: -->', cacheObj.cacheHit);
       let resBottles = [];
-      //console.log('Sample: -->',bottles[0].BaseAttributes);
-      bottles.forEach((bottle) => {
-        //console.log(bottle.name, bottle.id);
-      });
 
       if (properties.length >= 1) {
         console.log('wines going through scoring process')
         bottles.forEach((bottle) => {
           let _tmpBottle = {};
-          _tmpBottle.bottle = bottle.get({
-            raw: true,
-          });
+          _tmpBottle.bottle = bottle;
           _tmpBottle.attr = {};
           //filter the the weight result since it's somewhat barried in the reponse from sequelize
           bottle.BaseAttributes.forEach((attr) => {
@@ -293,9 +299,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
           return el.bottle;
         });
       } else {
-        resBottles = bottles.map(el =>{
-          return el.get({plain: true});
-        });
+        resBottles = bottles;
       }
 
       resBottles = resBottles.splice(0, 10);
@@ -399,7 +403,10 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
       }()),
     },
   };
-  db.Intents.findAll(options)
+  let cacheObj = cacher(db.sequelize, redisCache)
+    .model('Intents')
+    .ttl(config.get('CACHE_TIME'));
+  cacheObj.findAll(options)
     .then((results) => {
       responses.push({
         speech: '🤔 Hmm. I don\'t have a match. Are any of these close, or shall I ask a sommelier?',
@@ -445,10 +452,22 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
 
 });
 APIAI.on('get-varietals', (originalRequest, apiResponse) => {
-  const {intent_id} = apiResponse.result.parameters;
+  let {intent_id} = apiResponse.result.parameters;
+  if (intent_id.length > 1 ){
+    console.log('hereeee')
+    return APIAI.triggerMissingIntent(originalRequest, apiResponse);
+  } else {
+    intent_id = intent_id[0];
+  }
   let cards = [];
   let response = [];
-  db.Intents.findById(intent_id, {
+  let IntentsQRY = cacher(db.sequelize, redisCache)
+    .model('Intents')
+    .ttl(3600);
+  IntentsQRY.findAll({
+    where: {
+      id: intent_id,
+    },
     include: [{
       model: db.Varietals,
     }, {
@@ -457,6 +476,9 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
     order: [[db.Varietals, db.IntentVarietals, 'weight', 'ASC']],
   })
     .then((intent) => {
+      intent = intent[0];
+      console.log('IntentsQRY cached?', IntentsQRY.cacheHit);
+      //console.log('intent?', intent);
       //gather wine params for buttons
       let wineParams = {};
       intent.BaseAttributes.forEach((attr) => {
@@ -554,7 +576,10 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
       }],
     },
   };
-  db.Varietals.findOne(options)
+  let cacheObj = cacher(db.sequelize, redisCache)
+    .model('Varietals')
+    .ttl(config.get('CACHE_TIME'));
+  cacheObj.findOne(options)
     .then((varietal) => {
       console.log('_handleVarietalLearningCold: result:', varietal);
       let wine_params = {
