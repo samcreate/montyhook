@@ -358,7 +358,6 @@ class PostBacksHandler extends EventEmitter {
 
   shopbyVarietalAll({queryParams, uid}) {
 
-
     let _options = {
       include: [{
         model: db.BaseAttributes,
@@ -470,12 +469,13 @@ class PostBacksHandler extends EventEmitter {
               description = `${wine.description}`;
             }
 
-            let tmpCard = fb.cardGen(
-              `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-              wine.hero_gallery || '',
-              description || '',
-              tmpButtons
-            );
+            let tmpCard = {
+              title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
+              image_url: wine.hero_gallery || '',
+              subtitle: description || '',
+              item_url: wine.url,
+              buttons: tmpButtons,
+            };
 
             _tmpCards.push(tmpCard);
           });

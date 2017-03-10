@@ -337,13 +337,13 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
         //and one for not having a variance.
         let description = `${wine.description}`;
 
-        let tmpCard = fb.cardGen(
-          `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-          wine.hero_gallery || '',
-          description || '',
-          tmpButtons
-        );
-
+        let tmpCard = {
+          title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
+          image_url: wine.hero_gallery || '',
+          subtitle: description || '',
+          item_url: wine.url,
+          buttons: tmpButtons,
+        };
         _tmpCards.push(tmpCard);
       });
 
