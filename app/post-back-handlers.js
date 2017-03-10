@@ -21,9 +21,9 @@ class PostBacksHandler extends EventEmitter {
       });
 
       cards.push({
-        title: 'Share Monty.',
-        image_url: 'http://bit.ly/2mBDxtF',
-        subtitle: 'A bot who also happens to be a wine expert.',
+        title: 'Monty: A chatbot sommelier',
+        image_url: 'https://images.pexels.com/photos/202165/pexels-photo-202165.jpeg?w=1260&h=750&auto=compress&cs=tinysrgb',
+        subtitle: 'Get personalized wine recommendations from real sommeliers...as easy as chat.',
         item_url: 'https://www.messenger.com/t/montysips',
         buttons: tmplButtons,
       });
