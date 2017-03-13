@@ -27,10 +27,12 @@ const bot = new BootBot({
 });
 
 bot.app.post('/webhook', (req, res, next) =>{
-  Botmetrics.track(req.body, {
-    apiKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MTAsImV4cCI6MTgwNDk2MTgxNX0.0ab_EF2HMSP9eUFE6Z0R2DF-mbEVbHSJ-9bkSQlyhUc',
-    botId: '657657342085',
-  });
+  if (config.util.getEnv('NODE_ENV') === 'production'){
+    Botmetrics.track(req.body, {
+      apiKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MTAsImV4cCI6MTgwNDk2MTgxNX0.0ab_EF2HMSP9eUFE6Z0R2DF-mbEVbHSJ-9bkSQlyhUc',
+      botId: '657657342085',
+    });
+  }
   next();
 });
 
