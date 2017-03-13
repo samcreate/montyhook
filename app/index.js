@@ -9,6 +9,7 @@ import propLookUp from './util/property-lookup';
 import stats from './util/statistics';
 import redis from 'redis';
 import cacher from 'sequelize-redis-cache';
+import Botmetrics from 'botmetrics';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -16,11 +17,21 @@ redisCache.on('error', (err)=>{
   console.log('err: ', err);
 });
 
+
+
 const slack = new Slack(config.get('SLACKYPOO'));
 const bot = new BootBot({
   accessToken: config.get('FBACCESSTOKEN'),
   verifyToken: 'verify_this_biotch',
   appSecret: config.get('FBAPPSECRET'),
+});
+
+bot.app.post('/webhook', (req, res, next) =>{
+  Botmetrics.track(req.body, {
+    apiKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MTAsImV4cCI6MTgwNDk2MTgxNX0.0ab_EF2HMSP9eUFE6Z0R2DF-mbEVbHSJ-9bkSQlyhUc',
+    botId: '657657342085',
+  });
+  next();
 });
 
 bot.on('message', (payload) => {
