@@ -571,7 +571,10 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     where: {
       $or: [{
         name: {
-          $iLike: '%' + Varietal + '%',
+          $like: '%' + Varietal + '%',
+        },
+        synonyms: {
+          $like: '%' + Varietal + '%',
         },
       }],
     },
@@ -581,7 +584,7 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findOne(options)
     .then((varietal) => {
-      console.log('_handleVarietalLearningCold: result:', varietal);
+      console.log('`_handleVarietalLearningCold`: result:', varietal);
       let wine_params = {
         varietal_id: varietal.id,
         variance: null,
