@@ -5,7 +5,7 @@ import stats from './util/statistics';
 import fb from './util/facebook';
 import Slack from 'slack-node';
 import cacher from 'sequelize-redis-cache';
-
+import wineResGEN from './util/wineprodres-gen';
 
 class PostBacksHandler extends EventEmitter {
   constructor() {
@@ -353,7 +353,7 @@ class PostBacksHandler extends EventEmitter {
           if (_tmpCards.length === 1) {
             _tmpSpeech = 'Here\'s a smashing wine that matches your request';
           } else {
-            _tmpSpeech = 'Here\'s some smashing wines that match your request';
+            _tmpSpeech = wineResGEN();
           }
 
           resolve({
@@ -509,7 +509,7 @@ class PostBacksHandler extends EventEmitter {
           if (_tmpCards.length === 1) {
             _tmpSpeech = 'Here\'s a smashing wine that matches your request';
           } else {
-            _tmpSpeech = 'Here\'s some smashing wines that match your request';
+            _tmpSpeech = wineResGEN();
           }
 
           resolve({

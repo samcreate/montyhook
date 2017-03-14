@@ -10,6 +10,7 @@ import stats from './util/statistics';
 import redis from 'redis';
 import cacher from 'sequelize-redis-cache';
 import Botmetrics from 'botmetrics';
+import wineResGEN from './util/wineprodres-gen';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -368,7 +369,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       if (_tmpCards.length === 1) {
         _tmpSpeech = 'Here\'s a smashing wine that matches your request';
       } else {
-        _tmpSpeech = 'Here\'s some smashing wines that match your request';
+        _tmpSpeech = wineResGEN();
       }
 
       handleResponse({
