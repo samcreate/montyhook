@@ -33,7 +33,7 @@ class ApiGet extends EventEmitter {
         sessionId: uid,
       }).on('response', (response) => {
         //let resMsg = response.result.fulfillment.messages || [response.result.fulfillment]
-        console.log(response);
+        //console.log(response);
 
         if (response.result.action !== '' && response.result.action !== 'input.welcome') {
           this.emit(response.result.action, {

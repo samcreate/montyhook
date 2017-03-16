@@ -186,15 +186,20 @@ var fb = {}
   }
 
   fb.getUserData = ({uid}) => {
+    console.log('getUserData: ',uid)
     let fb_url = `https://graph.facebook.com/${uid}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=${config.get('FBACCESSTOKEN')}`;
     return new Promise((resolve, reject) => {
+
       request.get({
         url: fb_url,
       }, function(error, response, body) {
+        console.log('getUserData:2  ')
         body = JSON.parse(body)
         body.fullname = `${body.first_name} ${body.last_name}`
         body.id = uid;
+        console.log('getUserData:3  ', body);
         if (body.hasOwnProperty('first_name')) {
+          console.log('getUserData:4 ');
           resolve(body);
         } else {
           reject('FACEBOOK NAME FAILED')

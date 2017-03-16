@@ -20,31 +20,38 @@ class User extends EventEmitter {
         },
       })
       .then((user) => {
-        console.log('user cached?', cacheObj.cacheHit, user);
-        if (!user) {
+        console.log('FINDORCREATE: user cached?', cacheObj.cacheHit, user, uid);
+        if (!user && cacheObj.cacheHit === false) {
+          console.log('FINDORCREATE: ->FB');
           return fb.getUserData({
             uid,
           });
         } else {
-          return resolve(user);
+          console.log('FINDORCREATE: ->skip FB, already got it');
+          resolve(user);
         }
       })
       .then((fbUser)=>{
-        let {first_name, last_name, profile_pic, locale, timezone, gender} = fbUser;
-        return db.User.create({
-          uid,
-          first_name,
-          last_name,
-          profile_pic,
-          locale,
-          timezone,
-          gender,
-        });
+        console.log('FINDORCREATE: ->if we have a user from FB lets add to DB.');
+        if (fbUser) {
+          let {first_name, last_name, profile_pic, locale, timezone, gender} = fbUser;
+          return db.User.create({
+            uid,
+            first_name,
+            last_name,
+            profile_pic,
+            locale,
+            timezone,
+            gender,
+          });
+        }
       })
       .then((user) =>{
+        console.log('FINDORCREATE: ->last resolve.');
         resolve(user);
       })
       .catch((err)=>{
+        console.log('FINDORCREATE: errror', err)
         reject(err);
       });
     });
