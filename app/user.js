@@ -11,9 +11,16 @@ class User extends EventEmitter {
 
   findOrCreate(uid){
     return new Promise((resolve, reject) => {
-      db.User.findById(uid)
+      let cacheObj = cacher(db.sequelize, global.redisCache )
+        .model('User')
+        .ttl(config.get('CACHE_TIME'));
+      cacheObj.findOne({
+        where: {
+          uid,
+        },
+      })
       .then((user) => {
-        //console.log('fart: ', user)
+        console.log('user cached?', cacheObj.cacheHit, user);
         if (!user) {
           return fb.getUserData({
             uid,
