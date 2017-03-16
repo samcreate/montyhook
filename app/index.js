@@ -4,6 +4,7 @@ import APIAI from './api-ai';
 import db from 'montydb';
 import fb from './util/facebook';
 import postBacks from './post-back-handlers';
+import user from './user';
 import Slack from 'slack-node';
 import propLookUp from './util/property-lookup';
 import stats from './util/statistics';
@@ -46,6 +47,8 @@ bot.on('message', (payload) => {
     text,
   })
     .then(handleResponse);
+
+  user.findOrCreate(uid).catch(errorHandler);
 });
 bot.on('postback', (payload) => {
   let buttonData = payload.postback.payload;
