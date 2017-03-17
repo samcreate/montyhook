@@ -44,12 +44,18 @@ bot.app.post('/webhook', (req, res, next) =>{
 });
 bot.on('attachment', (payload, chat) => {
   // Send an attachment
+  console.log(payload.message.attachments[0])
   if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822){
     chat.say('👍',{typing:true});
   }
+  if (payload.message.attachments[0].type === 'image'){
+    chat.say('I wish I could see but I was born without 👁👁',{typing:true});
+  }
+  if (payload.message.attachments[0].type === 'audio'){
+    chat.say('I wish I could hear but I was born without 👂\'s',{typing:true});
+  }
 });
 bot.on('message', (payload) => {
-  console.log('message in')
   const text = payload.message.text;
   const uid = payload.sender.id;
   //console.log(`The user said: ${text}`, uid);
