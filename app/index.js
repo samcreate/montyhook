@@ -145,13 +145,13 @@ bot.setPersistentMenu([
   },
   {
     type: 'postback',
-    title: '🍇 Explore varietals',
-    payload: 'EXPLORE_VARIETALS~{}',
+    title: '🍾 Find wine by style',
+    payload: 'FIND_WINEBY_STYLE~{}',
   },
   {
     type: 'postback',
-    title: '🍾 Find wine by style',
-    payload: 'FIND_WINEBY_STYLE~{}',
+    title: '🍇 Explore varietals',
+    payload: 'EXPLORE_VARIETALS~{}',
   },
   {
     type: 'postback',
