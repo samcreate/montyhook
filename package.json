@@ -31,6 +31,7 @@
     "dashbot": "^0.8.4",
     "eventemitter3": "^2.0.2",
     "express": "^4.13.1",
+    "har-validator": "^5.0.2",
     "jsonwebtoken": "^5.0.5",
     "method-override": "^2.3.4",
     "mongoose": "^4.1.0",
