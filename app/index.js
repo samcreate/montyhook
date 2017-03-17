@@ -166,7 +166,7 @@ bot.setPersistentMenu([
 ]);
 
 
-
+bot.setGreetingText("👋 I'm Monty: A sommelier in your pocket. \n -Pair wine and food. \n -Find a \"style\" of wine \n -learn about wine. Part bot, part live network of sommeliers. Let's chat!");
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let {locations, vintage, properties, styles, varietals, type} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
@@ -185,7 +185,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   if (type.length < 1) {
     type = types;
   }
-
+  console.log('properties1-->', properties);
   properties = properties.map(prop => {
     let newProp = {};
     prop = prop.toLowerCase();
