@@ -25,7 +25,7 @@ class PostBacksHandler extends EventEmitter {
       cards.push({
         title: 'Monty: A sommelier in your pocket.',
         image_url: 'https://files.slack.com/files-pri/T1UTGQF51-F4JAV5C8K/montyshare.jpg?pub_secret=9921eea359',
-        subtitle: 'Friendly, easy-to-follow wine help on your phone. Free, On Facebook Messenger.',
+        subtitle: 'Friendly, easy-to-follow wine help on your phone. Free, on Facebook Messenger.',
         item_url: 'https://www.messenger.com/t/montysips',
         buttons: tmplButtons,
       });
