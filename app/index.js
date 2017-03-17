@@ -12,6 +12,10 @@ import redis from 'redis';
 import cacher from 'sequelize-redis-cache';
 import Botmetrics from 'botmetrics';
 import wineResGEN from './util/wineprodres-gen';
+import request from 'request';
+import DashBot from 'dashbot';
+
+let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -30,10 +34,7 @@ const bot = new BootBot({
 
 bot.app.post('/webhook', (req, res, next) =>{
   if (config.util.getEnv('NODE_ENV') === 'production'){
-    Botmetrics.track(req.body, {
-      apiKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MTAsImV4cCI6MTgwNDk2MTgxNX0.0ab_EF2HMSP9eUFE6Z0R2DF-mbEVbHSJ-9bkSQlyhUc',
-      botId: '657657342085',
-    });
+    dashbot.logIncoming(req.body);
   }
   next();
 });
@@ -623,49 +624,56 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
 
 const handleResponse = ({uid, messages}) => {
   let {type, speech, replies, title, cards, imageUrl, buttons} = messages.shift();
+  let msgData = {};
   let promise;
 
   if (type === 0) {
-    promise = bot.say(uid, speech, {
+    msgData.text = speech;
+    promise = bot.say(uid, msgData.text, {
       typing: true,
     });
   }
   if (type === 1) {
-    promise = bot.sendGenericTemplate(uid, cards, {
+    msgData = cards;
+    promise = bot.sendGenericTemplate(uid, msgData, {
       typing: true,
     });
   }
   if (type === 2) {
-    promise = bot.say(uid, {
+    msgData = {
       text: title,
       quickReplies: replies,
-    }, {
+    };
+    promise = bot.say(uid, msgData, {
       typing: true,
     });
   }
   if (type === 3) {
-    promise = bot.say(uid, {
+    msgData = {
       attachment: 'image',
       url: imageUrl,
-    }, {
+    };
+    promise = bot.say(uid, msgData, {
       typing: true,
     });
   }
   if (type === 'buttons') {
-    promise = bot.say(uid, {
+    msgData = {
       text: title,
       buttons,
-    }, {
+    };
+    promise = bot.say(uid, msgData, {
       typing: true,
     });
   }
 
   if (messages.length >= 1) {
-    promise.then(() => {
+    promise.then((res) => {
       handleResponse({
         uid,
         messages,
       });
+      track(uid,msgData,res);
     }).catch((err) => {
       //@TODO
       // - Send slack messages
@@ -674,6 +682,10 @@ const handleResponse = ({uid, messages}) => {
         err,
         uid,
       });
+    });
+  } else {
+    promise.then((res) => {
+      track(uid,msgData,res);
     });
   }
 };
@@ -694,12 +706,29 @@ const errorHandler = (({err, uid}) => {
     icon_emoji: ':pager:',
     channel: config.get('SLACK_CHANNEL_ERROR'),
   }, function(err, response) {
-    console.log('slack.api', response, err, config.get('SLACKYPOO'));
+    //console.log('slack.api', response, err, config.get('SLACKYPOO'));
   });
   handleResponse({
     uid,
     messages: [message]
   });
 });
+
+const track = ((id,msgData, res) => {
+  if (config.util.getEnv('NODE_ENV') === 'production'){
+    const requestData = {
+      url: `https://graph.facebook.com/v2.6/me/messages?access_token=${config.get('FBACCESSTOKEN')}`,
+      qs: {access_token: config.get('FBACCESSTOKEN')},
+      method: 'POST',
+      json: {
+        recipient: {id},
+        message: msgData,
+      },
+    };
+
+    dashbot.logOutgoing(requestData, res);
+  }
+});
+
 
 bot.start(process.env.PORT || 3000);
