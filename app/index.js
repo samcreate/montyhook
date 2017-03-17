@@ -34,14 +34,22 @@ const bot = new BootBot({
   appSecret: config.get('FBAPPSECRET'),
 });
 
+
+
 bot.app.post('/webhook', (req, res, next) =>{
   if (config.util.getEnv('NODE_ENV') === 'production'){
     dashbot.logIncoming(req.body);
   }
   next();
 });
-
+bot.on('attachment', (payload, chat) => {
+  // Send an attachment
+  if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822){
+    chat.say('👍',{typing:true});
+  }
+});
 bot.on('message', (payload) => {
+  console.log('message in')
   const text = payload.message.text;
   const uid = payload.sender.id;
   //console.log(`The user said: ${text}`, uid);
@@ -54,6 +62,7 @@ bot.on('message', (payload) => {
   user.findOrCreate(uid).catch(errorHandler);
 });
 bot.on('postback', (payload) => {
+
   let buttonData = payload.postback.payload;
   if (buttonData === 'BOOTBOT_GET_STARTED') {
     return;
