@@ -716,6 +716,11 @@ const errorHandler = (({err, uid}) => {
 
 const track = ((id,msgData, res) => {
   if (config.util.getEnv('NODE_ENV') === 'production'){
+    if ( Object.prototype.toString.call( msgData ) === '[object Array]' ) {
+      msgData = fb.getGenericTemplate(msgData);
+    } else if ( Object.prototype.toString.call( msgData ) === '[object Object]' && msgData.hasOwnProperty('attachment')){
+      msgData = fb.getAttachment(msgData, 'image');
+    }
     const requestData = {
       url: `https://graph.facebook.com/v2.6/me/messages?access_token=${config.get('FBACCESSTOKEN')}`,
       qs: {access_token: config.get('FBACCESSTOKEN')},
