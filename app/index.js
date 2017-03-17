@@ -167,6 +167,7 @@ bot.setPersistentMenu([
 
 
 bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pair wine and food\n—Find wine by "style"\n—And learn about wine as you go.');
+
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let {locations, vintage, properties, styles, varietals, type} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
