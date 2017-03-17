@@ -38,6 +38,7 @@
     "montysdb22": "git+https://081e7e8f6a631c230d4d6a32584d2d9580fb2f85:x-oauth-basic@github.com/samcreate/montydb.git",
     "morgan": "^1.6.1",
     "multer": "^1.0.5",
+    "newrelic": "^1.38.0",
     "node-fetch": "^1.6.3",
     "nodemon": "^1.11.0",
     "pg": "^6.1.2",

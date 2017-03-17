@@ -1,3 +1,4 @@
+import newrelic from 'newrelic';
 import config from 'config';
 import BootBot from 'bootbot';
 import APIAI from './api-ai';
@@ -14,6 +15,7 @@ import Botmetrics from 'botmetrics';
 import wineResGEN from './util/wineprodres-gen';
 import request from 'request';
 import DashBot from 'dashbot';
+
 
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 
