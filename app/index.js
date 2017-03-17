@@ -44,8 +44,7 @@ bot.app.post('/webhook', (req, res, next) =>{
 });
 bot.on('attachment', (payload, chat) => {
   // Send an attachment
-  console.log(payload.message.attachments[0])
-  if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822){
+  if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822 ||  payload.message.sticker_id === 369239343222814 ||  payload.message.sticker_id === 369239383222810){
     chat.say('👍',{typing:true});
   }
   if (payload.message.attachments[0].type === 'image' && payload.message.hasOwnProperty('sticker_id') === false){
