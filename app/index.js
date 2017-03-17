@@ -48,7 +48,7 @@ bot.on('attachment', (payload, chat) => {
   if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822){
     chat.say('👍',{typing:true});
   }
-  if (payload.message.attachments[0].type === 'image'){
+  if (payload.message.attachments[0].type === 'image' && payload.message.hasOwnProperty('sticker_id') === false){
     chat.say('I wish I could see but I was born without 👁👁',{typing:true});
   }
   if (payload.message.attachments[0].type === 'audio'){
