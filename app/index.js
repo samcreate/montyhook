@@ -452,6 +452,18 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
         speech: '🤔 Hmm. I don\'t have a match. Are any of these close, or shall I ask a sommelier?',
         type: 0,
       });
+      cards.push(fb.cardGen(
+        '  No dice? 🎲',
+        '',
+        'If none of these are close enough, I can ask a sommelier',
+        [{
+          'type': 'postback',
+          'payload': 'SOMMELIER~' + JSON.stringify({
+            missedIntent: missedMsg,
+          }),
+          'title': 'Ask a sommelier 🛎',
+        }]
+      ));
       results.forEach((intent) => {
         let _tmpTitle = intent.title.split(',')[0];
         cards.push(fb.cardGen(
@@ -467,19 +479,6 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           }]
         ));
       });
-
-      cards.push(fb.cardGen(
-        '  No dice? 🎲',
-        '',
-        'If none of these are close enough, I can ask a sommelier',
-        [{
-          'type': 'postback',
-          'payload': 'SOMMELIER~' + JSON.stringify({
-              missedIntent: missedMsg
-            }),
-          'title': 'Ask a sommelier 🛎',
-        }]
-      ));
       responses.push({
         cards,
         type: 1,
