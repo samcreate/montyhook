@@ -605,17 +605,21 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
 });
 APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
   const {Varietal} = apiResponse.result.parameters;
-  //console.log('varietal-learning-cold ', Varietal);
+  // console.log('varietal-learning-cold ', Varietal);
   let options = {
     where: {
-      $or: [{
-        name: {
-          $like: '%' + Varietal + '%',
+      $or: [
+        {
+          name: {
+            $like: '%' + Varietal + '%',
+          },
         },
-        synonyms: {
-          $like: '%' + Varietal + '%',
+        {
+          synonyms: {
+            $like: '%' + Varietal + '%',
+          },
         },
-      }],
+      ],
     },
   };
   let cacheObj = cacher(db.sequelize, redisCache)
@@ -623,7 +627,7 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findOne(options)
     .then((varietal) => {
-      console.log('`_handleVarietalLearningCold`: result:', varietal);
+      console.log('`_handleVarietalLearningCold`: result:');
       let wine_params = {
         varietal_id: varietal.id,
         variance: null,
