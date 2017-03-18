@@ -15,18 +15,32 @@ import Botmetrics from 'botmetrics';
 import wineResGEN from './util/wineprodres-gen';
 import request from 'request';
 import DashBot from 'dashbot';
-import session from 'express-session';
-import connectRedis from 'connect-redis';
+import Cache from 'express-redis-cache';
 
-let RedisStore = connectRedis(session);
-let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 
 global.redisCache = redis.createClient(config.get('REDIS'));
+
+let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
+let cache = Cache({client: global.redisCache, expire: 14400});
+
+
+
 
 redisCache.on('error', (err)=>{
   console.log('err: ', err);
 });
 
+redisCache.on('ready', (res)=>{
+  console.log('redis ready: ');
+  cache.add('user:info', JSON.stringify({
+    id: 1,
+    email: 'john@doe.com',
+  }), {
+    type: 'json',
+  },(error, added)=>{
+    console.log('cache.add')
+  });
+});
 
 
 const slack = new Slack(config.get('SLACKYPOO'));
@@ -36,15 +50,15 @@ const bot = new BootBot({
   appSecret: config.get('FBAPPSECRET'),
 });
 
-bot.app.use(session({
-  store: new RedisStore({url: config.get('REDIS')}),
-  secret: 'letitbee22',
-}));
 
 bot.app.post('/webhook', (req, res, next) =>{
   if (config.util.getEnv('NODE_ENV') === 'production'){
     dashbot.logIncoming(req.body);
   }
+  //
+  cache.get('user:info', function (error, entries) {
+    console.log(entries[0].body)
+  });
   next();
 });
 bot.on('attachment', (payload, chat) => {
