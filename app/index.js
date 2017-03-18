@@ -15,8 +15,10 @@ import Botmetrics from 'botmetrics';
 import wineResGEN from './util/wineprodres-gen';
 import request from 'request';
 import DashBot from 'dashbot';
+import session from 'express-session';
+import connectRedis from 'connect-redis';
 
-
+let RedisStore = connectRedis(session);
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 
 global.redisCache = redis.createClient(config.get('REDIS'));
@@ -34,7 +36,10 @@ const bot = new BootBot({
   appSecret: config.get('FBAPPSECRET'),
 });
 
-
+bot.app.use(session({
+  store: new RedisStore({url: config.get('REDIS')}),
+  secret: 'letitbee22',
+}));
 
 bot.app.post('/webhook', (req, res, next) =>{
   if (config.util.getEnv('NODE_ENV') === 'production'){
