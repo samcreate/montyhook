@@ -1,0 +1,41 @@
+
+curl -X POST -H "Content-Type: application/json" -d '{
+  "persistent_menu":[
+    {
+      "locale":"default",
+      "call_to_actions":[
+        {
+          "title":"☰ Menu",
+          "type":"nested",
+          "call_to_actions":[
+            {
+              "type": "postback",
+              "title": "🍷 Pair wine",
+              "payload": "FIND_A_WINE~{}"
+            },
+            {
+              "type": "postback",
+              "title": "🍾 Find wine by style",
+              "payload": "FIND_WINEBY_STYLE~{}"
+            },
+            {
+              "type": "postback",
+              "title": "🍇 Explore varietals",
+              "payload": "EXPLORE_VARIETALS~{}"
+            },
+            {
+              "type": "postback",
+              "title": "🙌 Share Monty",
+              "payload": "SHARE_MONTY~{}"
+            },
+            {
+              "type": "postback",
+              "title": "🆘 Help",
+              "payload": "HELP~{}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAANn80S1lzoBALZBSvcG5SUBiNGIgbE5ZBLJp4cVnPDU9wyC0ZAFUfOhwa3I7ZAmMKjO3YDDNNKUFCr6XnrelgYjJ8YtXVvmJFtNsIB4S9nZAsoGRrIulZA0k3SOrKCn7CdIezFRZCFzLSaZCRgIcaimw5kX0t0pK9pGlIwu1g2uogZDZD"

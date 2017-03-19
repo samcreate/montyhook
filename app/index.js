@@ -153,33 +153,39 @@ bot.setGetStartedButton((payload) => {
     .then(handleResponse)
     .catch(errorHandler);
 });
-bot.setPersistentMenu([
-  {
-    type: 'postback',
-    title: '🍷 Pair wine',
-    payload: 'FIND_A_WINE~{}',
-  },
-  {
-    type: 'postback',
-    title: '🍾 Find wine by style',
-    payload: 'FIND_WINEBY_STYLE~{}',
-  },
-  {
-    type: 'postback',
-    title: '🍇 Explore varietals',
-    payload: 'EXPLORE_VARIETALS~{}',
-  },
-  {
-    type: 'postback',
-    title: '🙌 Share Monty',
-    payload: 'SHARE_MONTY~{}',
-  },
-  {
-    type: 'postback',
-    title: '🆘 Help',
-    payload: 'HELP~{}',
-  },
-]);
+// bot.setPersistentMenu([
+//   {
+//     type: 'nested',
+//     title: '☰ Menu',
+//     call_to_actions: [
+//       {
+//         type: 'postback',
+//         title: '🍷 Pair wine',
+//         payload: 'FIND_A_WINE~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🍾 Find wine by style',
+//         payload: 'FIND_WINEBY_STYLE~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🍇 Explore varietals',
+//         payload: 'EXPLORE_VARIETALS~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🙌 Share Monty',
+//         payload: 'SHARE_MONTY~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🆘 Help',
+//         payload: 'HELP~{}',
+//       },
+//     ],
+//   },
+// ]);
 
 
 bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pair wine and food\n—Find wine by "style"\n—And learn about wine as you go.')
