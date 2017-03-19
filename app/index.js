@@ -454,14 +454,27 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findAll(options)
     .then((results) => {
-      responses.push({
-        speech: '🤔 Hmm. I don\'t have a match. Are any of these close, or shall I ask a sommelier?',
-        type: 0,
-      });
+      let randomResCopy = [
+        'I haven\'t learned what that is yet.',
+        'Hmm. It seems I don\'t know that yet. 😶',
+        'You have found something I don\'t know yet. 💡',
+      ];
+      if (results.length === 0 || results.length === undefined){
+        responses.push({
+          speech: randomResCopy[Math.floor(Math.random() * randomResCopy.length)],
+          type: 0,
+        });
+      } else {
+        responses.push({
+          speech: 'Swipe to see if there\'s a close match, or I can ask a sommelier. 👉',
+          type: 0,
+        });
+      }
+
       cards.push(fb.cardGen(
-        '  No dice? 🎲',
+        'Need an answer? 🤔',
         '',
-        'If none of these are close enough, I can ask a sommelier',
+        'Have a real sommelier answer your question as quick as humanly possible. 💪',
         [{
           'type': 'postback',
           'payload': 'SOMMELIER~' + JSON.stringify({
