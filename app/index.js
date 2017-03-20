@@ -481,7 +481,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           'payload': 'SOMMELIER~' + JSON.stringify({
             missedIntent: missedMsg,
           }),
-          'title': 'Ask a sommelier 🛎',
+          'title': 'Ask a Sommelier Now 🛎️',
         }]
       ));
       results.forEach((intent) => {
