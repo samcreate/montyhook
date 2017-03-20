@@ -31,15 +31,15 @@ redisCache.on('error', (err)=>{
 });
 
 redisCache.on('ready', (res)=>{
-  console.log('redis ready: ');
-  cache.add('user:info', JSON.stringify({
-    id: 1,
-    email: 'john@doe.com',
-  }), {
-    type: 'json',
-  },(error, added)=>{
-    console.log('cache.add')
-  });
+  // console.log('redis ready: ');
+  // cache.add('user:info', JSON.stringify({
+  //   id: 1,
+  //   email: 'john@doe.com',
+  // }), {
+  //   type: 'json',
+  // },(error, added)=>{
+  //   console.log('cache.add')
+  // });
 });
 
 
