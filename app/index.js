@@ -243,10 +243,10 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       }
     );
   });
-  varietals.forEach((varietal) => {
+  varietals.forEach((varietalId) => {
     $varOR.push(
       {
-        $iLike: `%${varietal}%`,
+        $eq: `${varietalId}`,
       }
     );
   });
@@ -255,6 +255,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Wines')
     .ttl(config.get('CACHE_TIME'));
+    console.log($varOR)
   cacheObj.findAll({
     include: [
       {
@@ -274,7 +275,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     where: {
       $or: [
         {
-          '$Varietals.name$': {
+          '$Varietals.id$': {
             $or: $varOR,
           },
           '$Locations.name$': {
@@ -629,13 +630,8 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     where: {
       $or: [
         {
-          name: {
-            $like: '%' + Varietal + '%',
-          },
-        },
-        {
-          synonyms: {
-            $like: '%' + Varietal + '%',
+          id: {
+            $eq: Varietal,
           },
         },
       ],
