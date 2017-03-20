@@ -172,33 +172,39 @@ bot.setGetStartedButton((payload) => {
     .then(handleResponse)
     .catch(errorHandler);
 });
-bot.setPersistentMenu([
-  {
-    type: 'postback',
-    title: '🍷 Pair wine',
-    payload: 'FIND_A_WINE~{}',
-  },
-  {
-    type: 'postback',
-    title: '🍾 Find wine by style',
-    payload: 'FIND_WINEBY_STYLE~{}',
-  },
-  {
-    type: 'postback',
-    title: '🍇 Explore varietals',
-    payload: 'EXPLORE_VARIETALS~{}',
-  },
-  {
-    type: 'postback',
-    title: '🙌 Share Monty',
-    payload: 'SHARE_MONTY~{}',
-  },
-  {
-    type: 'postback',
-    title: '🆘 Help',
-    payload: 'HELP~{}',
-  },
-]);
+// bot.setPersistentMenu([
+//   {
+//     type: 'nested',
+//     title: '☰ Menu',
+//     call_to_actions: [
+//       {
+//         type: 'postback',
+//         title: '🍷 Pair wine',
+//         payload: 'FIND_A_WINE~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🍾 Find wine by style',
+//         payload: 'FIND_WINEBY_STYLE~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🍇 Explore varietals',
+//         payload: 'EXPLORE_VARIETALS~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🙌 Share Monty',
+//         payload: 'SHARE_MONTY~{}',
+//       },
+//       {
+//         type: 'postback',
+//         title: '🆘 Help',
+//         payload: 'HELP~{}',
+//       },
+//     ],
+//   },
+// ]);
 
 
 bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pair wine and food\n—Find wine by "style"\n—And learn about wine as you go.')
@@ -256,10 +262,10 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       }
     );
   });
-  varietals.forEach((varietal) => {
+  varietals.forEach((varietalId) => {
     $varOR.push(
       {
-        $iLike: `%${varietal}%`,
+        $eq: `${varietalId}`,
       }
     );
   });
@@ -268,6 +274,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Wines')
     .ttl(config.get('CACHE_TIME'));
+    console.log($varOR)
   cacheObj.findAll({
     include: [
       {
@@ -287,7 +294,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     where: {
       $or: [
         {
-          '$Varietals.name$': {
+          '$Varietals.id$': {
             $or: $varOR,
           },
           '$Locations.name$': {
@@ -467,10 +474,35 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findAll(options)
     .then((results) => {
-      responses.push({
-        speech: '🤔 Hmm. I don\'t have a match. Are any of these close, or shall I ask a sommelier?',
-        type: 0,
-      });
+      let randomResCopy = [
+        'I haven\'t learned what that is yet.',
+        'Hmm. It seems I don\'t know that yet. 😶',
+        'You have found something I don\'t know yet. 💡',
+      ];
+      if (results.length === 0 || results.length === undefined){
+        responses.push({
+          speech: randomResCopy[Math.floor(Math.random() * randomResCopy.length)],
+          type: 0,
+        });
+      } else {
+        responses.push({
+          speech: 'Swipe to see if there\'s a close match, or I can ask a sommelier. 👉',
+          type: 0,
+        });
+      }
+
+      cards.push(fb.cardGen(
+        'Need an answer? 🤔',
+        '',
+        'Have a real sommelier answer your question as quick as humanly possible. 💪',
+        [{
+          'type': 'postback',
+          'payload': 'SOMMELIER~' + JSON.stringify({
+            missedIntent: missedMsg,
+          }),
+          'title': 'Ask a Sommelier Now 🛎️',
+        }]
+      ));
       results.forEach((intent) => {
         let _tmpTitle = intent.title.split(',')[0];
         cards.push(fb.cardGen(
@@ -486,19 +518,6 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           }]
         ));
       });
-
-      cards.push(fb.cardGen(
-        '  No dice? 🎲',
-        '',
-        'If none of these are close enough, I can ask a sommelier',
-        [{
-          'type': 'postback',
-          'payload': 'SOMMELIER~' + JSON.stringify({
-              missedIntent: missedMsg
-            }),
-          'title': 'Ask a sommelier 🛎',
-        }]
-      ));
       responses.push({
         cards,
         type: 1,
@@ -625,17 +644,16 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
 });
 APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
   const {Varietal} = apiResponse.result.parameters;
-  //console.log('varietal-learning-cold ', Varietal);
+  // console.log('varietal-learning-cold ', Varietal);
   let options = {
     where: {
-      $or: [{
-        name: {
-          $like: '%' + Varietal + '%',
+      $or: [
+        {
+          id: {
+            $eq: Varietal,
+          },
         },
-        synonyms: {
-          $like: '%' + Varietal + '%',
-        },
-      }],
+      ],
     },
   };
   let cacheObj = cacher(db.sequelize, redisCache)
@@ -643,7 +661,7 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findOne(options)
     .then((varietal) => {
-      console.log('`_handleVarietalLearningCold`: result:', varietal);
+      console.log('`_handleVarietalLearningCold`: result:');
       let wine_params = {
         varietal_id: varietal.id,
         variance: null,
