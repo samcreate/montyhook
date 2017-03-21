@@ -20,8 +20,9 @@ import Cache from 'express-redis-cache';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
+// four hours 14400
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
-let cache = Cache({client: global.redisCache, expire: 14400});
+let cache = Cache({client: global.redisCache, expire: 445120});
 
 
 
@@ -31,15 +32,36 @@ redisCache.on('error', (err)=>{
 });
 
 redisCache.on('ready', (res)=>{
-  // console.log('redis ready: ');
-  // cache.add('user:info', JSON.stringify({
-  //   id: 1,
-  //   email: 'john@doe.com',
-  // }), {
-  //   type: 'json',
-  // },(error, added)=>{
-  //   console.log('cache.add')
-  // });
+  console.log('redis ready: ');
+  let newUser = {
+    id: 796315227136119,
+    email: 'aaron@mcguire.com',
+  };
+  cache.get('users:paused', function (error, entries) {
+    if (entries.length >= 1) {
+      entries.forEach((user) =>{
+
+        user = JSON.parse(user.body);
+        console.log(user)
+        if(user.id === newUser.id){
+          console.log('user already exists in queue');
+        }else{
+          cache.add('users:paused', JSON.stringify(newUser), {
+            type: 'json',
+          },(error, added)=>{
+            console.log('user.added in check')
+          });
+        }
+      });
+    } else {
+      cache.add('users:paused', JSON.stringify(newUser), {
+        type: 'json',
+      },(error, added)=>{
+        console.log('user.added')
+      });
+    }
+  });
+
 });
 
 
@@ -50,16 +72,67 @@ const bot = new BootBot({
   appSecret: config.get('FBAPPSECRET'),
 });
 
-
+bot.app.get('/startchat/:uid', (req, res, next) =>{
+  //
+  let uid = req.params.uid;
+  console.log('test', uid);
+  res.redirect('slack://channel?id=C1UTGQHQB&team=bottletalk');
+});
 bot.app.post('/webhook', (req, res, next) =>{
   if (config.util.getEnv('NODE_ENV') === 'production'){
     dashbot.logIncoming(req.body);
   }
   //
-  cache.get('user:info', function (error, entries) {
-    console.log(entries[0].body)
+  new Promise((resolve) => {
+    cache.get('users:paused', function (error, users) {
+      console.log('users:paused check');
+      let data = req.body;
+      if (data.object === 'page') {
+        console.log('---> it\'s from a page');
+        if (users.length >= 1){
+          console.log('---> its a meesage to check and we have paused users');
+          data.entry.forEach((entry) => {
+            console.log('---> data entry loop');
+            entry.messaging.forEach((event) => {
+              // console.log('---> event loop',event.message.attachments);
+              if (event.message && event.message.text) {
+                console.log('---> event.message true');
+                let sender = event.sender.id;
+                let message = event.message;
+                // console.log('::::: message::::::', event,users);
+                users.forEach((user, i) =>{
+                  user = JSON.parse(user.body);
+                  user.id = parseInt(user.id);
+                  sender = parseInt(sender);
+                  console.log('---> user: ', user.id,  sender);
+                  if (user.id === sender){
+                    console.log('---> mark message as paused');
+                    message.paused = true;
+                  }
+                  if (i === (users.length - 1)){
+                    //console.log('loop is over');
+                    console.log('RESOLVED FART');
+                    resolve();
+                  }
+                });
+              } else {
+                resolve();
+              }
+            });
+          });
+        } else {
+          console.log('here?')
+          resolve();
+        }
+      }
+    });
+  })
+  .then(()=>{
+    next();
+  })
+  .catch(()=>{
+    next();
   });
-  next();
 });
 bot.on('attachment', (payload, chat) => {
   // Send an attachment
@@ -76,12 +149,17 @@ bot.on('attachment', (payload, chat) => {
 bot.on('message', (payload) => {
   const text = payload.message.text;
   const uid = payload.sender.id;
-  //console.log(`The user said: ${text}`, uid);
   APIAI.get({
     uid,
     text,
   })
     .then(handleResponse);
+  if (payload.message.hasOwnProperty('paused') !== true){
+
+  } else {
+    console.log('user paused');
+  }
+
 
   user.findOrCreate(uid).catch(errorHandler);
 });
@@ -274,8 +352,8 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Wines')
     .ttl(config.get('CACHE_TIME'));
-    console.log($varOR)
-  cacheObj.findAll({
+    console.log('$varOR',$varOR)
+  db.Wines.findAll({
     include: [
       {
         model: db.Varietals,
@@ -339,7 +417,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
             // console.log('queryparm: :', param, ':', properties[0].variance);
             let _queryWeight =  properties[0].variance[param];
             let _bottleWeight = _tmpBottle.attr[param].weight;
-            //console.log('_tmpBottle.attr: :', param, ':', _tmpBottle.attr[param].weight)
+            console.log('_tmpBottle.attr[param].score',  stats.variance([_bottleWeight, _queryWeight]))
             _tmpBottle.attr[param].score = stats.variance([_bottleWeight, _queryWeight]);
           }
 
@@ -357,10 +435,12 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
           });
 
         });
+
         //sort the scores from least to greatest
         resBottles = resBottles.sort(function(a, b) {
           return a.score - b.score;
         });
+        console.log('STINKS',resBottles);
         resBottles = resBottles.map(el => {
           return el.bottle;
         });
@@ -370,6 +450,12 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
 
       resBottles = resBottles.splice(0, 10);
 
+      // let test = resBottles.map(el=>{
+      //
+      //   console.log(el)
+      //     return el.score;
+      // });
+      //console.log('STINKS: ',test)
       if (resBottles.length < 1) {
 
         slack.api('chat.postMessage', {
@@ -772,7 +858,6 @@ const errorHandler = (({err, uid}) => {
     messages: [message]
   });
 });
-
 const track = ((id,msgData, res) => {
   if (config.util.getEnv('NODE_ENV') === 'production'){
     if ( Object.prototype.toString.call( msgData ) === '[object Array]' ) {
