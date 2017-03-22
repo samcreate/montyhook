@@ -53,7 +53,8 @@
     "sequelize-redis-cache": "https://github.com/samcreate/sequelize-redis-cache/tarball/master",
     "serve-favicon": "^2.3.0",
     "shell-arguments": "^1.0.4",
-    "slack-node": "^0.1.8"
+    "slack-node": "^0.1.8",
+    "smooch-core": "^3.5.0"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",

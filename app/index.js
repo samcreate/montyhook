@@ -16,16 +16,17 @@ import wineResGEN from './util/wineprodres-gen';
 import request from 'request';
 import DashBot from 'dashbot';
 import Cache from 'express-redis-cache';
+import SmoochApi from './smooch';
 
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
 // four hours 14400
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
-let cache = Cache({client: global.redisCache, expire: 445120});
+let cache = Cache({client: global.redisCache, expire: 30});
 
 
-
+SmoochApi.sendTestMessage(796315227136119);
 
 redisCache.on('error', (err)=>{
   console.log('err: ', err);
@@ -33,34 +34,6 @@ redisCache.on('error', (err)=>{
 
 redisCache.on('ready', (res)=>{
   console.log('redis ready: ');
-  let newUser = {
-    id: 796315227136119,
-    email: 'aaron@mcguire.com',
-  };
-  cache.get('users:paused', function (error, entries) {
-    if (entries.length >= 1) {
-      entries.forEach((user) =>{
-
-        user = JSON.parse(user.body);
-        console.log(user)
-        if(user.id === newUser.id){
-          console.log('user already exists in queue');
-        }else{
-          cache.add('users:paused', JSON.stringify(newUser), {
-            type: 'json',
-          },(error, added)=>{
-            console.log('user.added in check')
-          });
-        }
-      });
-    } else {
-      cache.add('users:paused', JSON.stringify(newUser), {
-        type: 'json',
-      },(error, added)=>{
-        console.log('user.added')
-      });
-    }
-  });
 
 });
 
@@ -75,64 +48,88 @@ const bot = new BootBot({
 bot.app.get('/startchat/:uid', (req, res, next) =>{
   //
   let uid = req.params.uid;
-  console.log('test', uid);
-  res.redirect('slack://channel?id=C1UTGQHQB&team=bottletalk');
+  console.log('looking for:', `users:${uid}`)
+  cache.get(`users:${uid}`, function (error, entries) {
+    console.log(entries,'fart');
+    if (entries.length >= 1) {
+      let user = JSON.parse(entries[0].body);
+      console.log('user already exists in queue', user);
+    } else {
+      cache.add(`users:${uid}`, JSON.stringify({
+        id: uid,
+        paused: true,
+      }), {
+        type: 'json',
+      },(error, added)=>{
+        console.log('user.added',added, error);
+      });
+    }
+  });
+  // slack.api('channels.create', {
+  //   name: `users-${uid}`,
+  // }, function(err, response) {
+  //   console.log('slack.api', response, err, config.get('SLACKYPOO'));
+  // });
+  res.redirect('slack://channel?id=C4MHW68BV&team=T1UTGQF51');
 });
-bot.app.post('/webhook', (req, res, next) =>{
-  if (config.util.getEnv('NODE_ENV') === 'production'){
+bot.app.get('/unpause/:uid', (req, res, next) =>{
+  //
+  let uid = req.params.uid;
+  cache.del(`users:${uid}`, function (error) {
+    console.log('alldone;');
+  });
+});
+
+bot.app.post('/sync_messages', (req, res, next) => {
+  console.log('sync_messages post called', req.body);
+  res.sendStatus(200);
+});
+bot.app.get('/sync_messages', (req, res, next) => {
+  console.log('sync_messages get called', req.body);
+  res.sendStatus(200);
+});
+bot.app.post('/webhook', (req, res, next) => {
+  if (config.util.getEnv('NODE_ENV') === 'production') {
     dashbot.logIncoming(req.body);
   }
   //
   new Promise((resolve) => {
-    cache.get('users:paused', function (error, users) {
-      console.log('users:paused check');
-      let data = req.body;
-      if (data.object === 'page') {
-        console.log('---> it\'s from a page');
-        if (users.length >= 1){
-          console.log('---> its a meesage to check and we have paused users');
-          data.entry.forEach((entry) => {
-            console.log('---> data entry loop');
-            entry.messaging.forEach((event) => {
-              // console.log('---> event loop',event.message.attachments);
-              if (event.message && event.message.text) {
-                console.log('---> event.message true');
-                let sender = event.sender.id;
-                let message = event.message;
-                // console.log('::::: message::::::', event,users);
-                users.forEach((user, i) =>{
-                  user = JSON.parse(user.body);
-                  user.id = parseInt(user.id);
-                  sender = parseInt(sender);
-                  console.log('---> user: ', user.id,  sender);
-                  if (user.id === sender){
-                    console.log('---> mark message as paused');
-                    message.paused = true;
-                  }
-                  if (i === (users.length - 1)){
-                    //console.log('loop is over');
-                    console.log('RESOLVED FART');
-                    resolve();
-                  }
-                });
-              } else {
-                resolve();
+
+    let data = req.body;
+    if (data.object === 'page') {
+      console.log('---> it\'s from a page');
+      console.log('---> its a meesage to check and we have paused users');
+      data.entry.forEach((entry) => {
+        console.log('---> data entry loop',entry.messaging);
+        entry.messaging.forEach((event, i) => {
+          console.log('---> event loop',i);
+          if (event.message && event.message.text) {
+            console.log('---> event.message true');
+            let sender = event.sender.id;
+            let message = event.message;
+            // console.log('::::: message::::::', event,users);
+            cache.get(`users:${sender}`, function (error, user) {
+              if (user.length >= 1) {
+                console.log('---> mark message as paused');
+                message.paused = true;
               }
+              resolve();
             });
-          });
-        } else {
-          console.log('here?')
-          resolve();
-        }
-      }
+          } else {
+            resolve();
+          }
+        });
+      });
+
+    }
+
+  })
+    .then(() => {
+      next();
+    })
+    .catch(() => {
+      next();
     });
-  })
-  .then(()=>{
-    next();
-  })
-  .catch(()=>{
-    next();
-  });
 });
 bot.on('attachment', (payload, chat) => {
   // Send an attachment
@@ -149,15 +146,16 @@ bot.on('attachment', (payload, chat) => {
 bot.on('message', (payload) => {
   const text = payload.message.text;
   const uid = payload.sender.id;
-  APIAI.get({
-    uid,
-    text,
-  })
-    .then(handleResponse);
-  if (payload.message.hasOwnProperty('paused') !== true){
 
+  if (payload.message.hasOwnProperty('paused') !== true){
+    APIAI.get({
+      uid,
+      text,
+    })
+      .then(handleResponse);
   } else {
     console.log('user paused');
+    bot.say(uid,'fart');``
   }
 
 
@@ -397,7 +395,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       let resBottles = [];
 
       if (properties.length >= 1) {
-        console.log('wines going through scoring process')
+      //  console.log('wines going through scoring process')
         bottles.forEach((bottle) => {
           let _tmpBottle = {};
           _tmpBottle.bottle = bottle;
@@ -440,7 +438,13 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
         resBottles = resBottles.sort(function(a, b) {
           return a.score - b.score;
         });
-        console.log('STINKS',resBottles);
+
+        //filter based on threshold
+        resBottles = resBottles.filter((el) =>{
+          if (el.score < 13.5){
+            return el;
+          }
+        });
         resBottles = resBottles.map(el => {
           return el.bottle;
         });
