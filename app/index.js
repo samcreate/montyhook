@@ -16,8 +16,9 @@ import wineResGEN from './util/wineprodres-gen';
 import request from 'request';
 import DashBot from 'dashbot';
 import Cache from 'express-redis-cache';
-import SmoochApi from './smooch';
-
+import bodyParser from 'body-parser';
+import crypto from 'crypto';
+import shortid from 'shortid';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -25,8 +26,6 @@ global.redisCache = redis.createClient(config.get('REDIS'));
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 let cache = Cache({client: global.redisCache, expire: 30});
 
-
-SmoochApi.sendTestMessage(796315227136119);
 
 redisCache.on('error', (err)=>{
   console.log('err: ', err);
@@ -36,13 +35,66 @@ redisCache.on('ready', (res)=>{
   console.log('redis ready: ');
 
 });
+// db.sequelize.sync()
+//   .then(() => {
+//     console.log('database synched')
+//   }).catch((err) => {
+//   console.log("ERROR: ", err);
+// })
+
+// db.Channel.create({channel_id:'83743jhdf'})
+// .then((channel)=>{
+// console.log(channel)
+// })
+// .catch((err)=>{
+//   console.log('err',err)
+// })
+
 
 
 const slack = new Slack(config.get('SLACKYPOO'));
+
+BootBot.prototype._verifyRequestSignature = function(req, res, buf){
+
+  if (req.headers['user-agent'] !== 'Slackbot 1.0 (+https://api.slack.com/robots)') {
+    let signature = req.headers['x-hub-signature'];
+    if (!signature) {
+      throw new Error('Couldn\'t validate the request signature.');
+    } else {
+      let elements = signature.split('=');
+      let signatureHash = elements[1];
+      let expectedHash = crypto.createHmac('sha1', this.appSecret)
+        .update(buf)
+        .digest('hex');
+
+      if (signatureHash !== expectedHash) {
+        throw new Error('Couldn\'t validate the request signature.');
+      }
+    }
+  }
+};
+
 const bot = new BootBot({
   accessToken: config.get('FBACCESSTOKEN'),
   verifyToken: 'verify_this_biotch',
   appSecret: config.get('FBAPPSECRET'),
+});
+
+bot.app.use(bodyParser.urlencoded({ extended: false }));
+bot.app.post('/send-message', (req, res, next) =>{
+  console.log('/send-message', req.body);
+  db.Channel.findOne({
+    where: {
+      channel_id: req.body.channel_id,
+    },
+  })
+  .then((channel)=>{
+    return bot.say(channel.UserUid, req.body.text);
+  })
+  .then(()=>{
+
+  });
+  res.status(200).send(req.body.text);
 });
 
 bot.app.get('/startchat/:uid', (req, res, next) =>{
@@ -55,23 +107,50 @@ bot.app.get('/startchat/:uid', (req, res, next) =>{
       let user = JSON.parse(entries[0].body);
       console.log('user already exists in queue', user);
     } else {
-      cache.add(`users:${uid}`, JSON.stringify({
-        id: uid,
-        paused: true,
-      }), {
-        type: 'json',
-      },(error, added)=>{
-        console.log('user.added',added, error);
+
+      let ourUser;
+      db.User.findById(uid)
+      .then((user)=>{
+        ourUser = user;
+        return new Promise((resolve, reject) => {
+          slack.api('channels.create', {
+            name: `${user.first_name}_${user.last_name}-${shortid.generate()}`,
+          }, function(err, response) {
+            if(response.ok === true){
+              resolve(response)
+            } else {
+              reject(response)
+            }
+            console.log('slack.api', response);
+          });
+        });
+      })
+      .then((slackChannel) =>{
+        return db.Channel.create({channel_id: slackChannel.channel.id});
+      })
+      .then((dbChannel) =>{
+        return ourUser.setChannel(dbChannel);
+      })
+      .then((setResponse) =>{
+        console.log();
+        cache.add(`users:${uid}`, JSON.stringify(setResponse.get({raw: true})), {
+          type: 'json',
+        },(error, added)=>{
+          res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
+          console.log('@@@@@ user.added',added, setResponse.channel_id);
+        });
+      })
+      .catch((err)=>{
+        console.log('err',err);
+        res.status(500).send('Something broke!' + JSON.stringify(err));
       });
     }
   });
-  // slack.api('channels.create', {
-  //   name: `users-${uid}`,
-  // }, function(err, response) {
-  //   console.log('slack.api', response, err, config.get('SLACKYPOO'));
-  // });
-  res.redirect('slack://channel?id=C4MHW68BV&team=T1UTGQF51');
+
+  //
 });
+
+
 bot.app.get('/unpause/:uid', (req, res, next) =>{
   //
   let uid = req.params.uid;
