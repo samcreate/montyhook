@@ -1,5 +1,6 @@
 {
-    "HOST": "montymin-stage.herokuapp.com",
+    "HOSTADMIN": "montymin-stage.herokuapp.com",
+    "HOST": "montyhook-stage.herokuapp.com",
     "APIAI_CLIENT_TOKEN": "b8210beaa60a488681c6fa7fc0977c19",
     "APIAI_DEV_TOKEN": "f7a8aef0013a459ca6c0d31d87c4f6ea",
     "FBACCESSTOKEN": "EAALmwut1We0BAPN48N5bgsoRSUTZA362ISdI3VSZBSOsAvCADkTG7fS4Ibm2ZArsmoFWDbZA8ZAZBX3lC9LDsoVbB0het7hWDkQlBHo5ZB3ZAgnj760C9ZCwTDISIRALhsLxIiCInY2u9TujJAHmmFcn0IZC7cOmGIKGUY5gze9jiZAOAZDZD",

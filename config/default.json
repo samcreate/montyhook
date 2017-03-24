@@ -1,5 +1,6 @@
 {
-    "HOST": "localhost:3001",
+    "HOSTADMIN": "localhost:3001",
+    "HOST": "bottletalk.ngrok.io",
     "MEDIA_URL": "https://s3-us-west-1.amazonaws.com/monty-prod/",
     "IMAGE_SQUARE": {
       "width":300,

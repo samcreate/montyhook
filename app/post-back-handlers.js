@@ -6,6 +6,7 @@ import fb from './util/facebook';
 import Slack from 'slack-node';
 import cacher from 'sequelize-redis-cache';
 import wineResGEN from './util/wineprodres-gen';
+import wineCardGen from './util/wine-card-gen';
 
 class PostBacksHandler extends EventEmitter {
   constructor() {
@@ -83,7 +84,7 @@ class PostBacksHandler extends EventEmitter {
                 author_name: `${fbData.fullname} said:`,
                 author_icon: `${fbData.profile_pic}`,
                 title: '👉 Add new to Montymin 👈',
-                title_link: `https://${config.get('BASIC_AUTH_USER')}:${config.get('BASIC_AUTH_PASS_ENCODED')}@${config.get('HOST')}/intents/add?intent=${_missedMsg}&pastConvoID=${pastConvo.id}`,
+                title_link: `https://${config.get('BASIC_AUTH_USER')}:${config.get('BASIC_AUTH_PASS_ENCODED')}@${config.get('HOSTADMIN')}/intents/add?intent=${_missedMsg}&pastConvoID=${pastConvo.id}`,
                 text: `${_missedMsg}`,
                 footer: 'Monty\'s Pager',
                 ts: (new Date).getTime(),
@@ -93,7 +94,7 @@ class PostBacksHandler extends EventEmitter {
                   {
                     pretext: 'Potential Match? 🤔',
                     title: intent.title,
-                    title_link: `https://${config.get('BASIC_AUTH_USER')}:${config.get('BASIC_AUTH_PASS_ENCODED')}@${config.get('HOST')}/intents/edit/${intent.id}?intent_add=${_missedMsg}&pastConvoID=${pastConvo.id}`
+                    title_link: `https://${config.get('BASIC_AUTH_USER')}:${config.get('BASIC_AUTH_PASS_ENCODED')}@${config.get('HOSTADMIN')}/intents/edit/${intent.id}?intent_add=${_missedMsg}&pastConvoID=${pastConvo.id}`
                   }
                 );
               });
@@ -318,53 +319,20 @@ class PostBacksHandler extends EventEmitter {
           } else if (resBottles.length > 10) {
             resBottles = resBottles.splice(0, 10);
           }
-          const _metals = ['🥇', '🥈', '🥉'];
-          resBottles.forEach((resBottle, i) => {
-            let tmpButtons = [];
-            let wine = resBottle.bottle.bottle;
-            let place = _metals[i] || '';
-            tmpButtons.push({
-              'type': "web_url",
-              'url': wine.url,
-              'title': `Shop at ${wine.price}`,
-            });
 
-            //description for if there's a varaince applied on the selection
-            //and one for not having a variance.
-            let description = `${wine.description}`;
-
-            if (queryParams.variance === null) {
-              description = `${wine.description}`;
-            }
-
-
-            let tmpCard = {
-              title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-              image_url: wine.hero_gallery || '',
-              subtitle: description || '',
-              item_url: wine.url,
-              buttons: tmpButtons,
-            };
-
-            _tmpCards.push(tmpCard);
+          resBottles = resBottles.map(item => {
+            return item.bottle.bottle;
           });
-
-          let _tmpSpeech;
-          if (_tmpCards.length === 1) {
-            _tmpSpeech = 'Here\'s a smashing wine that matches your request';
-          } else {
-            _tmpSpeech = wineResGEN();
-          }
-
+          let wineRes = wineCardGen(resBottles);
           resolve({
             uid,
             messages: [
               {
-                speech: _tmpSpeech,
+                speech: wineRes.speech,
                 type: 0,
               },
               {
-                cards: _tmpCards,
+                cards: wineRes.cards,
                 type: 1,
               },
             ],
@@ -475,52 +443,17 @@ class PostBacksHandler extends EventEmitter {
           } else if (resBottles.length > 10) {
             resBottles = resBottles.splice(0, 10);
           }
-          const _metals = ['🥇', '🥈', '🥉'];
-          resBottles.forEach((resBottle, i) => {
-            let tmpButtons = [];
-            let wine = resBottle.bottle.bottle;
-            let place = _metals[i] || '';
-            tmpButtons.push({
-              'type': "web_url",
-              'url': wine.url,
-              'title': `Shop at ${wine.price}`,
-            });
-
-            //description for if there's a varaince applied on the selection
-            //and one for not having a variance.
-            let description = `${wine.description}`;
-
-            if (queryParams.variance === null) {
-              description = `${wine.description}`;
-            }
-
-            let tmpCard = {
-              title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-              image_url: wine.hero_gallery || '',
-              subtitle: description || '',
-              item_url: wine.url,
-              buttons: tmpButtons,
-            };
-
-            _tmpCards.push(tmpCard);
-          });
-
-          let _tmpSpeech;
-          if (_tmpCards.length === 1) {
-            _tmpSpeech = 'Here\'s a smashing wine that matches your request';
-          } else {
-            _tmpSpeech = wineResGEN();
-          }
+          let wineRes = wineCardGen(resBottles);
 
           resolve({
             uid,
             messages: [
               {
-                speech: _tmpSpeech,
+                speech: wineRes.speech,
                 type: 0,
               },
               {
-                cards: _tmpCards,
+                cards: wineRes.cards,
                 type: 1,
               },
             ],

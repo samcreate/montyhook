@@ -19,12 +19,15 @@ import Cache from 'express-redis-cache';
 import bodyParser from 'body-parser';
 import crypto from 'crypto';
 import shortid from 'shortid';
+import wineCardGen from './util/wine-card-gen';
+import cardGen from './util/cards-gen';
+// import openSlack from 'open-slack';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
 // four hours 14400
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
-let cache = Cache({client: global.redisCache, expire: 30});
+let cache = Cache({client: global.redisCache, expire: 14400});
 
 
 redisCache.on('error', (err)=>{
@@ -35,24 +38,10 @@ redisCache.on('ready', (res)=>{
   console.log('redis ready: ');
 
 });
-// db.sequelize.sync()
-//   .then(() => {
-//     console.log('database synched')
-//   }).catch((err) => {
-//   console.log("ERROR: ", err);
-// })
-
-// db.Channel.create({channel_id:'83743jhdf'})
-// .then((channel)=>{
-// console.log(channel)
-// })
-// .catch((err)=>{
-//   console.log('err',err)
-// })
 
 
-
-const slack = new Slack(config.get('SLACKYPOO'));
+const montySlack = new Slack('xoxb-158388941842-KpXzYKLEHORZV9UywyaTLofy');
+const slack = new Slack('xoxp-62934831171-62994946897-157077774481-b58e19cdb2401f99634885f754985da5');
 
 BootBot.prototype._verifyRequestSignature = function(req, res, buf){
 
@@ -89,83 +78,346 @@ bot.app.post('/send-message', (req, res, next) =>{
     },
   })
   .then((channel)=>{
-    return bot.say(channel.UserUid, req.body.text);
-  })
-  .then(()=>{
-
+    if (channel){
+      bot.say(channel.UserUid, req.body.text);
+    }
   });
-  res.status(200).send(req.body.text);
+  res.status(200).send(req.body.text+ ' -- sent!');
 });
-
-bot.app.get('/startchat/:uid', (req, res, next) =>{
+bot.app.get('/startchat/:uid', (req, res, next) => {
   //
   let uid = req.params.uid;
-  console.log('looking for:', `users:${uid}`)
-  cache.get(`users:${uid}`, function (error, entries) {
-    console.log(entries,'fart');
-    if (entries.length >= 1) {
-      let user = JSON.parse(entries[0].body);
-      console.log('user already exists in queue', user);
-    } else {
-
-      let ourUser;
-      db.User.findById(uid)
-      .then((user)=>{
-        ourUser = user;
+  let channelID;
+  let ourUser;
+  console.log('looking for:', `users:${uid}`);
+  db.User.findOne({
+    where: {
+      uid,
+    },
+    include: [
+      {
+        model: db.Channel,
+      },
+    ],
+  })
+    .then((user) => {
+      ourUser = user;
+      if (!ourUser){
+        return false;
+      }
+      console.log('user found');
+      if (user.Channel) {
+        //return existing channel
+        console.log('channel found');
+        return new Promise((resolve, reject) => {
+          console.log('trying unarchive channel');
+          slack.api('channels.unarchive', {
+            channel: user.Channel.channel_id,
+          }, function(err, response) {
+            if (response.ok === true) {
+              console.log('unarchive inviting monty back in');
+              slack.api('channels.invite', {
+                channel: user.Channel.channel_id,
+                user: 'U4NBETPQS',
+              }, function(err, response) {
+                if (response.ok === true) {
+                  console.log('all good, lets go');
+                  resolve(user.Channel);
+                } else {
+                  reject(response);
+                }
+              });
+            } else {
+              if (response.error === 'not_archived'){
+                console.log('not_archived');
+                resolve(user.Channel);
+              } else {
+                reject(response);
+              }
+            }
+          });
+        });
+      } else {
+        console.log('create a chatroom and send on through');
+        //create a chatroom and send on through
         return new Promise((resolve, reject) => {
           slack.api('channels.create', {
-            name: `${user.first_name}_${user.last_name}-${shortid.generate()}`,
+            name: `M_${user.first_name}_${user.last_name}`,
           }, function(err, response) {
-            if(response.ok === true){
-              resolve(response)
+            if (response.ok === true) {
+              console.log('slack channgel created');
+              db.Channel.create({
+                channel_id: response.channel.id,
+              })
+                .then((dbChannel) => {
+                  return ourUser.setChannel(dbChannel);
+                })
+                .then((setChannel) => {
+                  console.log('try to sjoin channel');
+                  return new Promise((resolve, reject) => {
+                    slack.api('channels.invite', {
+                      channel: setChannel.channel_id,
+                      user: 'U4NBETPQS',
+                    }, function(err, response) {
+                      if (response.ok === true) {
+                        resolve(setChannel);
+                      } else {
+                        reject(response);
+                      }
+                    });
+                  });
+                })
+                .then((setChannel) => {
+                  resolve(setChannel);
+                });
             } else {
-              reject(response)
+              console.log('slack channgel rejected')
+              reject(response);
             }
             console.log('slack.api', response);
           });
         });
-      })
-      .then((slackChannel) =>{
-        return db.Channel.create({channel_id: slackChannel.channel.id});
-      })
-      .then((dbChannel) =>{
-        return ourUser.setChannel(dbChannel);
-      })
-      .then((setResponse) =>{
-        console.log();
-        cache.add(`users:${uid}`, JSON.stringify(setResponse.get({raw: true})), {
-          type: 'json',
-        },(error, added)=>{
-          res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
-          console.log('@@@@@ user.added',added, setResponse.channel_id);
+      }
+    })
+    .then((setResponse) => {
+      console.log('FUCKKKKKKKKK; ',setResponse)
+      channelID = setResponse.channel_id;
+      cache.add(`users:${uid}`, JSON.stringify(setResponse.get({
+        raw: true
+      })), {
+        type: 'json',
+      }, (error, added) => {
+        res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
+      });
+    })
+    .then(() => {
+      return new Promise((resolve, reject) => {
+
+        let _response = [{
+          fallback: '',
+          color: '#000000',
+          author_name: `${ourUser.first_name} ${ourUser.last_name}`,
+          author_icon: `${ourUser.profile_pic}`,
+          title: 'View Profile Photo',
+          title_link: ourUser.profile_pic,
+          text: `Gender: ${ourUser.gender}, Locale: ${ourUser.locale}, Locale: ${ourUser.timezone}`,
+          footer: 'Monty\'s Pager',
+          ts: (new Date).getTime(),
+        }];
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          pretext: '*Use is paused.*',
+          text: '_Use `/m [TEXT]` to reply_',
+          mrkdwn_in: ['text', 'pretext'],
         });
-      })
-      .catch((err)=>{
-        console.log('err',err);
-        res.status(500).send('Something broke!' + JSON.stringify(err));
+        montySlack.api('chat.postMessage', {
+          text: 'User Info:',
+          attachments: JSON.stringify(_response),
+          as_user: true,
+          channel: channelID,
+        }, function(err, response) {
+          if (response.ok === true) {
+            resolve(response);
+          } else {
+            reject(response);
+          }
+        });
+
+      });
+    })
+    .catch((err) => {
+      console.log('err', err);
+      res.status(500).send('Something broke!' + JSON.stringify(err));
+    });
+});
+bot.app.post('/unpause', (req, res, next) => {
+
+  db.Channel.findOne({
+    where: {
+      channel_id: req.body.channel_id,
+    },
+  })
+    .then((channel) => {
+      if (channel) {
+        cache.del(`users:${channel.UserUid}`, function(error) {
+          console.log('user unpaused;');
+          res.status(200).send('user is no longer paused.');
+        });
+      }
+    });
+});
+bot.app.post('/pause', (req, res, next) => {
+
+  db.Channel.findOne({
+    where: {
+      channel_id: req.body.channel_id,
+    },
+  })
+    .then((channel) => {
+      if (channel) {
+        cache.add(`users:${channel.UserUid}`, JSON.stringify(channel.get({
+          raw: true
+        })), {
+          type: 'json',
+        }, (error, added) => {
+          res.status(200).send('user has been paused.');
+        });
+      }
+    });
+});
+bot.app.post('/sendwine', (req, res, next) => {
+
+  let wineIds = req.body.text.split(',').map(function(item) {
+    return parseInt(item, 10);
+  }).splice(0, 10);
+  let resBottles;
+  db.Wines.findAll({
+    where: {
+      id: wineIds,
+    },
+  })
+  .then((bottles) =>{
+    console.log(bottles);
+    if (bottles && bottles.length >= 1){
+      resBottles = bottles;
+      return  db.Channel.findOne({
+        where: {
+          channel_id: req.body.channel_id,
+        },
+      });
+    } else {
+      return res.status(200).send('☹️ Could not find any matching wine for: ' + JSON.stringify(wineIds));
+    }
+  })
+  .then((channel) =>{
+    if (channel){
+      let wineRes = wineCardGen(resBottles);
+      handleResponse({
+        uid: channel.UserUid,
+        messages: [
+          {
+            speech: wineRes.speech,
+            type: 0,
+          },
+          {
+            cards: wineRes.cards,
+            type: 1,
+          },
+        ],
+      });
+    } // if channel
+    res.status(200).send('Wine sent! 🍷 💌 ✈️');
+  })
+  .catch((err) =>{
+    res.status(200).send('☹️ There was an Error with your request: ' + JSON.stringify(err));
+  });
+});
+bot.app.post('/sendcards', (req, res, next) => {
+
+  let cardIds = req.body.text.split(',').map(function(item) {
+    return parseInt(item, 10);
+  }).splice(0, 10);
+  console.log('/sendcards: ',cardIds)
+  let resCards;
+  db.Varietals.findAll({
+    where: {
+      id: cardIds,
+    },
+  })
+  .then((cards) =>{
+
+    if (cards && cards.length >= 1){
+      resCards = cards;
+      return  db.Channel.findOne({
+        where: {
+          channel_id: req.body.channel_id,
+        },
+      });
+    } else {
+      return res.status(200).send('☹️ Could not find any matching cards for: ' + JSON.stringify(cardIds));
+    }
+  })
+  .then((channel) =>{
+    if (channel){
+      resCards = cardGen(resCards);
+      handleResponse({
+        uid: channel.UserUid,
+        messages: [
+          {
+            cards: resCards,
+            type: 1,
+          },
+        ],
+      });
+    } // if channel
+    res.status(200).send('Card(s) sent! 🃏 💌 ✈️');
+  })
+  .catch((err) =>{
+    res.status(200).send('☹️ There was an Error with your request: ' + JSON.stringify(err));
+  });
+});
+bot.app.post('/getuser', (req, res, next) => {
+  let name = req.body.text.split(' ').map(function(item) {
+    return item.trim();
+  });
+  console.log(name);
+  let _where = {
+    $and: [],
+  };
+  _where.$and.push({
+    first_name: {
+      $iLike: name[0],
+    },
+  });
+  if (name.length > 1){
+    _where.$and.push({
+      last_name: {
+        $iLike: name[1],
+      },
+    });
+  }
+  db.User.findAll({
+    where: _where,
+  })
+  .then((users)=>{
+    if(users && users.length >= 1){
+      let _response = [];
+      users.forEach((user)=>{
+        _response.push(
+          {
+            fallback: '',
+            color: '#000000',
+            author_name: `${user.first_name} ${user.last_name}`,
+            author_icon: `${user.profile_pic}`,
+            title: 'Start Chat? (Pause user)',
+            title_link: `https://${config.get('HOST')}/startchat/${user.uid}`,
+            text: `Gender: ${user.gender}, Locale: ${user.locale}, Locale: ${user.timezone}`,
+            footer: 'Monty\'s Spy service™',
+            ts: (new Date).getTime(),
+          }
+        );
+      });
+      slack.api('chat.postMessage', {
+        text: 'Results:',
+        attachments: JSON.stringify(_response),
+        username: 'Monty\'s Search',
+        icon_emoji: ':mag:',
+        channel: req.body.channel_id,
+      }, function(err, response) {
+        if (response.ok === true) {
+
+        } else {
+          console.log(response);
+        }
       });
     }
+  })
+  .catch((err)=>{
+    console.log(err);
+    res.status(200).send(err);
   });
-
-  //
-});
-
-
-bot.app.get('/unpause/:uid', (req, res, next) =>{
-  //
-  let uid = req.params.uid;
-  cache.del(`users:${uid}`, function (error) {
-    console.log('alldone;');
-  });
-});
-
-bot.app.post('/sync_messages', (req, res, next) => {
-  console.log('sync_messages post called', req.body);
-  res.sendStatus(200);
-});
-bot.app.get('/sync_messages', (req, res, next) => {
-  console.log('sync_messages get called', req.body);
-  res.sendStatus(200);
+  res.status(200).send('');
 });
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
@@ -189,7 +441,7 @@ bot.app.post('/webhook', (req, res, next) => {
             // console.log('::::: message::::::', event,users);
             cache.get(`users:${sender}`, function (error, user) {
               if (user.length >= 1) {
-                console.log('---> mark message as paused');
+                console.log('!!!!!!!!---> mark message as paused');
                 message.paused = true;
               }
               resolve();
@@ -210,6 +462,7 @@ bot.app.post('/webhook', (req, res, next) => {
       next();
     });
 });
+
 bot.on('attachment', (payload, chat) => {
   // Send an attachment
   if (payload.message.hasOwnProperty('sticker_id') && payload.message.sticker_id === 369239263222822 ||  payload.message.sticker_id === 369239343222814 ||  payload.message.sticker_id === 369239383222810){
@@ -234,7 +487,41 @@ bot.on('message', (payload) => {
       .then(handleResponse);
   } else {
     console.log('user paused');
-    bot.say(uid,'fart');``
+    db.User.findOne({
+      where: {
+        uid,
+      },
+      include: [
+        {
+          model: db.Channel,
+        },
+      ],
+    })
+    .then((user)=>{
+      // console.log('##### user',user.Channel);
+      slack.api('chat.postMessage', {
+        username: `${user.first_name} ${user.last_name}`,
+        icon_url: user.profile_pic,
+        channel: user.Channel.channel_id,
+        attachments: JSON.stringify([
+          {
+            fallback: `sent a message.`,
+            color: '#36a64f',
+            pretext: `*${text}*`,
+            text: '_Use `/m [TEXT]` to reply_',
+            mrkdwn_in: ['text', 'pretext'],
+          },
+        ]),
+      }, function(err, response) {
+        if (response.ok){
+          bot.sendAction(uid, 'mark_seen');
+        }
+        //console.log('slack.api', response, err, config.get('SLACKYPOO'));
+      });
+    }).catch((err)=>{
+      console.log(err);
+    })
+    // bot.say(uid,'fart');
   }
 
 
@@ -327,48 +614,8 @@ bot.setGetStartedButton((payload) => {
     .then(handleResponse)
     .catch(errorHandler);
 });
-// bot.setPersistentMenu([
-//   {
-//     type: 'nested',
-//     title: '☰ Menu',
-//     call_to_actions: [
-//       {
-//         type: 'postback',
-//         title: '🍷 Pair wine',
-//         payload: 'FIND_A_WINE~{}',
-//       },
-//       {
-//         type: 'postback',
-//         title: '🍾 Find wine by style',
-//         payload: 'FIND_WINEBY_STYLE~{}',
-//       },
-//       {
-//         type: 'postback',
-//         title: '🍇 Explore varietals',
-//         payload: 'EXPLORE_VARIETALS~{}',
-//       },
-//       {
-//         type: 'postback',
-//         title: '🙌 Share Monty',
-//         payload: 'SHARE_MONTY~{}',
-//       },
-//       {
-//         type: 'postback',
-//         title: '🆘 Help',
-//         payload: 'HELP~{}',
-//       },
-//     ],
-//   },
-// ]);
-
-
 bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pair wine and food\n—Find wine by "style"\n—And learn about wine as you go.')
-.then((res)=>{
-  console.log('positive res: ', res);
-})
-.catch((err)=>{
-  console.log('negative res: ', err);
-});
+
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let {locations, vintage, properties, styles, varietals, type} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
@@ -560,48 +807,17 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
 
         return false;
       }
-
-      const _metals = ['🥇', '🥈', '🥉'];
-      let _tmpCards = [];
-      resBottles.forEach((wine, i) => {
-        let tmpButtons = [];
-        let place = _metals[i] || '';
-        tmpButtons.push({
-          'type': "web_url",
-          'url': wine.url,
-          'title': `Shop at ${wine.price}`,
-        });
-
-        //description for if there's a varaince applied on the selection
-        //and one for not having a variance.
-        let description = `${wine.description}`;
-
-        let tmpCard = {
-          title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
-          image_url: wine.hero_gallery || '',
-          subtitle: description || '',
-          item_url: wine.url,
-          buttons: tmpButtons,
-        };
-        _tmpCards.push(tmpCard);
-      });
-
-      let _tmpSpeech;
-      if (_tmpCards.length === 1) {
-        _tmpSpeech = 'Here\'s a smashing wine that matches your request';
-      } else {
-        _tmpSpeech = wineResGEN();
-      }
+      let wineRes = wineCardGen(resBottles);
 
       handleResponse({
         uid: originalRequest.uid,
         messages: [
           {
-            speech: _tmpSpeech,
+            speech: wineRes.speech,
             type: 0,
           },
           {
-            cards: _tmpCards,
+            cards: wineRes.cards,
             type: 1,
           },
         ],
@@ -732,60 +948,7 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
         wineParams[attr.name] = attr.IntentsAttributes.weight;
       });
 
-      //limit the number of varietals
-      intent.Varietals = intent.Varietals.splice(0, 9);
-
-      //generate the cards
-      intent.Varietals.forEach((varietal) => {
-
-        let tmpCard;
-        let tmpButtons = [];
-        let tmpWineParams = {
-          varietal_id: varietal.id,
-          variance: wineParams,
-        };
-
-        tmpButtons.push(fb.buttonGen('Browse 👀', 'SHOPBY_VARIETAL~' + JSON.stringify(tmpWineParams), 'postback'));
-
-        tmpButtons.push(fb.buttonGen('Learn more 👉', 'VARIETAL_LEARNMORE~' +
-        JSON.stringify({
-          varietal_id: varietal.id,
-          steps: ['bubble1', 'bubble2'],
-          step: 1,
-          wine_params: tmpWineParams,
-        }),
-          'postback'
-        ));
-
-        tmpCard = fb.cardGen(
-          varietal.name,
-          '',
-          varietal.description,
-          tmpButtons
-        );
-        cards.push(tmpCard);
-
-      });
-
-      cards.push(
-        fb.cardGen(
-          ' 💎 Monty’s picks',
-          '',
-          'Let me surprise you with a variety of wine gems that match your request.',
-          [{
-            'type': 'postback',
-            'payload': 'SHOPBY_ALL~' + JSON.stringify({
-                variance: wineParams
-              }),
-            'title': 'Browse Monty\'s Picks',
-          },
-            {
-              'type': 'postback',
-              'payload': 'ABOUT_MONTYS_PICKS~{}',
-              'title': 'About Monty\'s Picks',
-            }]
-        )
-      );
+      let formattedCards = cardGen(intent.Varietals,wineParams);
       response.push({
         imageUrl: intent.hero || '',
         type: 3,
@@ -801,8 +964,9 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
           type: 0,
         });
       }
+      console.log('formattedCards ',formattedCards)
       response.push({
-        cards,
+        cards: formattedCards,
         type: 1,
       });
       handleResponse({

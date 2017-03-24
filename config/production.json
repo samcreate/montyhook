@@ -1,5 +1,6 @@
 {
-    "HOST": "montymin.herokuapp.com",
+    "HOSTADMIN": "montymin.herokuapp.com",
+    "HOST": "montyhook.herokuapp.com",
     "APIAI_CLIENT_TOKEN": "bc1e96cecdfe4063ba406fa1e95ff78e",
     "APIAI_DEV_TOKEN": "5b6735d64a114db5a669b8fb740e7813",
     "FBACCESSTOKEN": "EAALmTHli9KUBAJiCNZAR5E70pU3DYIfcTerzYsFs9FxEWzaMfPhhGKgsTe7NZAVZCXsviSajzO1NTy1oZCs2Dm2ZCwjGZAVVYiVKAstsDz68jApaXuCL52zRXZAw3HcquopwzPPiqZBBQdH8M4k8Ou2zi4wk7jJZAcyZBUsF0ptSKZB7gZDZD",
