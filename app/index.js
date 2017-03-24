@@ -218,6 +218,18 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
           text: '_Use `/m [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: '_Use `/pause to recieve messages from user in slack',
+          mrkdwn_in: ['text', 'pretext'],
+        });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: '_Use `/unpause to allow the bot handle the messages',
+          mrkdwn_in: ['text', 'pretext'],
+        });
         montySlack.api('chat.postMessage', {
           text: 'User Info:',
           attachments: JSON.stringify(_response),
