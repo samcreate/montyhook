@@ -398,7 +398,7 @@ bot.app.post('/getuser', (req, res, next) => {
             color: '#000000',
             author_name: `${user.first_name} ${user.last_name}`,
             author_icon: `${user.profile_pic}`,
-            title: 'Start Chat? (Pause user)',
+            title: 'Start Chat?',
             title_link: `https://${config.get('HOST')}/startchat/${user.uid}`,
             text: `Gender: ${user.gender}, Locale: ${user.locale}, Locale: ${user.timezone}`,
           }
