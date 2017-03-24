@@ -904,7 +904,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
       }
 
       cards.push(fb.cardGen(
-        'Need an answer? 🤔',
+        'ASK A SOMMELIER',
         '',
         'Have a real sommelier answer your question as quick as humanly possible. 💪',
         [{
@@ -912,7 +912,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           'payload': 'SOMMELIER~' + JSON.stringify({
             missedIntent: missedMsg,
           }),
-          'title': 'Ask a Sommelier Now 🛎️',
+          'title': 'Ask now 🛎️',
         }]
       ));
       results.forEach((intent) => {
