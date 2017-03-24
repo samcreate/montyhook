@@ -215,19 +215,37 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
         _response.push({
           fallback: 'ARRR.',
           color: '#36a64f',
-          text: '_Use `/m [TEXT]` to reply_',
+          text: '_`/m [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
           fallback: 'ARRR.',
           color: '#36a64f',
-          text: '_Use `/pause to recieve messages from user in slack',
+          text: `_\`/pause\` to recieve messages from ${ourUser.first_name} in slack_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
           fallback: 'ARRR.',
           color: '#36a64f',
-          text: '_Use `/unpause to allow the bot handle the messages',
+          text: `_\`/unpause\` to allow the bot handle the messages from ${ourUser.first_name}_`,
+          mrkdwn_in: ['text', 'pretext'],
+        });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: `_\`/sendwine 22,34,2\` to send wine cards to ${ourUser.first_name}_`,
+          mrkdwn_in: ['text', 'pretext'],
+        });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: `_\`/sendcards 69,666,1\` to send cards to ${ourUser.first_name}_`,
+          mrkdwn_in: ['text', 'pretext'],
+        });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: `_\`/sendintent 33\` to send an intent flow to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         montySlack.api('chat.postMessage', {
