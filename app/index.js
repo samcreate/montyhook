@@ -21,7 +21,6 @@ import crypto from 'crypto';
 import shortid from 'shortid';
 import wineCardGen from './util/wine-card-gen';
 import cardGen from './util/cards-gen';
-// import openSlack from 'open-slack';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -36,7 +35,6 @@ redisCache.on('error', (err)=>{
 
 redisCache.on('ready', (res)=>{
   console.log('redis ready: ');
-
 });
 
 
@@ -95,7 +93,10 @@ bot.app.post('/send-message', (req, res, next) =>{
 
       }
     });
-  })
+  });
+
+  //reset the cache time
+
   res.status(200).send('');
 });
 bot.app.get('/startchat/:uid', (req, res, next) => {
@@ -194,15 +195,8 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
       }
     })
     .then((setResponse) => {
-      console.log('FUCKKKKKKKKK; ',setResponse)
       channelID = setResponse.channel_id;
-      cache.add(`users:${uid}`, JSON.stringify(setResponse.get({
-        raw: true
-      })), {
-        type: 'json',
-      }, (error, added) => {
-        res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
-      });
+      res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
     })
     .then(() => {
       return new Promise((resolve, reject) => {
@@ -430,6 +424,28 @@ bot.app.post('/getuser', (req, res, next) => {
   });
   res.status(200).send('');
 });
+bot.app.post('/sendintent', (req, res, next) => {
+  let intentId = parseInt(req.body.text);
+  db.Channel.findOne({
+    where: {
+      channel_id: req.body.channel_id,
+    },
+  })
+    .then((channel) => {
+      if (channel){
+        APIAI.triggerIntent({
+          uid: channel.UserUid,
+          intent_id: intentId,
+        });
+        res.status(200).send('Intent(s) sent! 🤖 💌 ✈️');
+      } else {
+        return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
+      }
+    })
+    .catch(()=>{
+      return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
+    });
+});
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
     dashbot.logIncoming(req.body);
@@ -439,20 +455,20 @@ bot.app.post('/webhook', (req, res, next) => {
 
     let data = req.body;
     if (data.object === 'page') {
-      console.log('---> it\'s from a page');
-      console.log('---> its a meesage to check and we have paused users');
+      //console.log('---> it\'s from a page');
+      //console.log('---> its a meesage to check and we have paused users');
       data.entry.forEach((entry) => {
-        console.log('---> data entry loop',entry.messaging);
+        //console.log('---> data entry loop',entry.messaging);
         entry.messaging.forEach((event, i) => {
-          console.log('---> event loop',i);
+          //console.log('---> event loop',i);
           if (event.message && event.message.text) {
-            console.log('---> event.message true');
+            //console.log('---> event.message true');
             let sender = event.sender.id;
             let message = event.message;
             // console.log('::::: message::::::', event,users);
             cache.get(`users:${sender}`, function (error, user) {
               if (user.length >= 1) {
-                console.log('!!!!!!!!---> mark message as paused');
+                //console.log('!!!!!!!!---> mark message as paused');
                 message.paused = true;
               }
               resolve();
@@ -975,7 +991,7 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
           type: 0,
         });
       }
-      console.log('formattedCards ',formattedCards)
+      console.log('formattedCards ',formattedCards);
       response.push({
         cards: formattedCards,
         type: 1,

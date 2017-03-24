@@ -1,4 +1,5 @@
 {
+    "SLACK_CHANNEL":"#missing-intents-stage",
     "HOSTADMIN": "montymin-stage.herokuapp.com",
     "HOST": "montyhook-stage.herokuapp.com",
     "APIAI_CLIENT_TOKEN": "b8210beaa60a488681c6fa7fc0977c19",
