@@ -89,6 +89,12 @@ class PostBacksHandler extends EventEmitter {
                 footer: 'Monty\'s Pager',
                 ts: (new Date).getTime(),
               }];
+              _response.push({
+                fallback: 'Chat with user?',
+                color: '#36a64f',
+                title:  `👉 Open a chat with: ${fbData.fullname} 🤳`,
+                title_link: `https://${config.get('HOST')}/startchat/${uid}`,
+              });
               results.forEach((intent) => {
                 _response.push(
                   {
