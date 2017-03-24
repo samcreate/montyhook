@@ -215,7 +215,6 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
         _response.push({
           fallback: 'ARRR.',
           color: '#36a64f',
-          pretext: '*Use is paused.*',
           text: '_Use `/m [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         });
