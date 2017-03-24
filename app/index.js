@@ -466,7 +466,7 @@ bot.app.post('/sendintent', (req, res, next) => {
           uid: channel.UserUid,
           intent_id: intentId,
         });
-        res.status(200).send('Intent(s) sent! 🤖 💌 ✈️');
+        res.status(200).send('Intent sent! 🤖 💌 ✈️');
       } else {
         return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
       }
