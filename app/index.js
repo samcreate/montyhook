@@ -81,8 +81,22 @@ bot.app.post('/send-message', (req, res, next) =>{
     if (channel){
       bot.say(channel.UserUid, req.body.text);
     }
-  });
-  res.status(200).send(req.body.text+ ' -- sent!');
+  })
+  .then(()=>{
+    montySlack.api('chat.postMessage', {
+      text: req.body.text,
+      channel: req.body.channel_id,
+      username: `${req.body.user_name} replied`,
+      icon_emoji: ':wine_glass:',
+    }, function(err, response) {
+      if (response.ok === true) {
+
+      } else {
+
+      }
+    });
+  })
+  res.status(200).send('');
 });
 bot.app.get('/startchat/:uid', (req, res, next) => {
   //
@@ -393,13 +407,10 @@ bot.app.post('/getuser', (req, res, next) => {
             title: 'Start Chat? (Pause user)',
             title_link: `https://${config.get('HOST')}/startchat/${user.uid}`,
             text: `Gender: ${user.gender}, Locale: ${user.locale}, Locale: ${user.timezone}`,
-            footer: 'Monty\'s Spy service™',
-            ts: (new Date).getTime(),
           }
         );
       });
       slack.api('chat.postMessage', {
-        text: 'Results:',
         attachments: JSON.stringify(_response),
         username: 'Monty\'s Search',
         icon_emoji: ':mag:',
@@ -507,7 +518,7 @@ bot.on('message', (payload) => {
           {
             fallback: `sent a message.`,
             color: '#36a64f',
-            pretext: `*${text}*`,
+            pretext: `${text}`,
             text: '_Use `/m [TEXT]` to reply_',
             mrkdwn_in: ['text', 'pretext'],
           },
