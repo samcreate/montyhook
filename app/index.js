@@ -198,6 +198,15 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
       channelID = setResponse.channel_id;
       res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
     })
+    .then(() =>{
+      return new Promise((resolve, reject) => {
+        cache.add(`channel:${uid}`, JSON.stringify({uid}), {
+          type: 'json',
+        }, (error, added) => {
+          resolve();
+        });
+      });
+    })
     .then(() => {
       return new Promise((resolve, reject) => {
 
@@ -532,7 +541,7 @@ bot.on('attachment', (payload, chat) => {
   }
 });
 bot.on('message', (payload) => {
-  const text = payload.message.text;
+  let text = payload.message.text;
   const uid = payload.sender.id;
 
   if (payload.message.hasOwnProperty('paused') !== true){
@@ -541,46 +550,16 @@ bot.on('message', (payload) => {
       text,
     })
       .then(handleResponse);
+      cache.get(`channel:${uid}`, function (error, channelUser) {
+        if (channelUser.length >= 1) {
+          text = `${text} - *User is not paused.*`;
+          sendAsUserToSlack({uid, text});
+        }
+      });
   } else {
     console.log('user paused');
-    db.User.findOne({
-      where: {
-        uid,
-      },
-      include: [
-        {
-          model: db.Channel,
-        },
-      ],
-    })
-    .then((user)=>{
-      // console.log('##### user',user.Channel);
-      slack.api('chat.postMessage', {
-        username: `${user.first_name} ${user.last_name}`,
-        icon_url: user.profile_pic,
-        channel: user.Channel.channel_id,
-        attachments: JSON.stringify([
-          {
-            fallback: `sent a message.`,
-            color: '#36a64f',
-            pretext: `${text}`,
-            text: '_Use `/m [TEXT]` to reply_',
-            mrkdwn_in: ['text', 'pretext'],
-          },
-        ]),
-      }, function(err, response) {
-        if (response.ok){
-          bot.sendAction(uid, 'mark_seen');
-        }
-        //console.log('slack.api', response, err, config.get('SLACKYPOO'));
-      });
-    }).catch((err)=>{
-      console.log(err);
-    })
-    // bot.say(uid,'fart');
+    sendAsUserToSlack({uid, text});
   }
-
-
   user.findOrCreate(uid).catch(errorHandler);
 });
 bot.on('postback', (payload) => {
@@ -1182,6 +1161,39 @@ const track = ((id,msgData, res) => {
     dashbot.logOutgoing(requestData, res);
   }
 });
-
+const sendAsUserToSlack = ({uid, text}) => {
+  db.User.findOne({
+    where: {
+      uid,
+    },
+    include: [
+      {
+        model: db.Channel,
+      },
+    ],
+  })
+  .then((user)=>{
+    // console.log('##### user',user.Channel);
+    slack.api('chat.postMessage', {
+      username: `${user.first_name} ${user.last_name}`,
+      icon_url: user.profile_pic,
+      channel: user.Channel.channel_id,
+      attachments: JSON.stringify([
+        {
+          fallback: `sent a message.`,
+          color: '#36a64f',
+          pretext: `${text}`,
+          text: '_Use `/m [TEXT]` to reply_',
+          mrkdwn_in: ['text', 'pretext'],
+        },
+      ]),
+    }, function(err, response) {
+      if (response.ok){
+        bot.sendAction(uid, 'mark_seen');
+      }
+    });
+  })
+  .catch(errorHandler);
+};
 
 bot.start(process.env.PORT || 3000);
