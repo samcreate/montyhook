@@ -38,17 +38,29 @@ class ApiGet extends EventEmitter {
         if (response.result.action !== '' && response.result.action !== 'input.welcome') {
           this.emit(response.result.action, {
             uid,
-            text
+            text,
           }, response);
         } else {
+          let notCards = [];
+          let cards = [];
+          response.result.fulfillment.messages.forEach((msg)=>{
+            if (msg.type === 4 && msg.payload.hasOwnProperty('cards')){
+              cards.push(msg.payload);
+            } else {
+              notCards.push(msg);
+            }
+          });
+
+          notCards = notCards.concat(cards);
+          console.log('notCards', notCards)
           resolve({
             uid,
-            messages: response.result.fulfillment.messages,
+            messages: notCards,
           });
         }
       })
         .on('error', (error) => {
-          console.error(error);
+          console.error('!!!!error!!!!', error);
           reject(error);
         })
         .end();

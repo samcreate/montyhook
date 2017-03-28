@@ -21,6 +21,8 @@ import crypto from 'crypto';
 import shortid from 'shortid';
 import wineCardGen from './util/wine-card-gen';
 import cardGen from './util/cards-gen';
+import stopword from 'stopword';
+
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 
@@ -631,6 +633,14 @@ bot.on('postback', (payload) => {
       .then(handleResponse);
   }
 
+  if (buttonData.indexOf('MENU') !== -1) {
+    APIAI.get({
+      uid,
+      text: queryParams.trigger,
+    })
+      .then(handleResponse);
+  }
+
   if (buttonData.indexOf('SHARE_MONTY') !== -1) {
     postBacks.shareMonty({
       queryParams,
@@ -662,7 +672,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   let fortifiedBool = [false, true];
   let naturalBool = [false, true];
   let types = ['white', 'red', 'rose', 'sparkling', 'dessert'];
-
+  let propsOG = properties;
   vintage = `%${tmpYear}%`;
   varietals = varietals || [''];
   locations = locations || [''];
@@ -675,6 +685,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     let newProp = {};
     prop = prop.toLowerCase();
     newProp.variance = propLookUp[prop];
+    newProp.original = prop;
     return newProp;
   });
   console.log('properties-->', properties);
@@ -755,13 +766,14 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       console.log('How many: -->', bottles.length);
       console.log('Cached?: -->', cacheObj.cacheHit);
       let resBottles = [];
-
+      console.log('properties: ', properties)
       if (properties.length >= 1) {
       //  console.log('wines going through scoring process')
         bottles.forEach((bottle) => {
           let _tmpBottle = {};
           _tmpBottle.bottle = bottle;
           _tmpBottle.attr = {};
+          console.log(`${bottle.vintage} ${bottle.producer}, ${bottle.name}`)
           //filter the the weight result since it's somewhat barried in the reponse from sequelize
           bottle.BaseAttributes.forEach((attr) => {
             // console.log(attr.name, attr.WinesAttributes.weight)
@@ -777,16 +789,16 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
             // console.log('queryparm: :', param, ':', properties[0].variance);
             let _queryWeight =  properties[0].variance[param];
             let _bottleWeight = _tmpBottle.attr[param].weight;
-            console.log('_tmpBottle.attr[param].score',  stats.variance([_bottleWeight, _queryWeight]))
+            //console.log('_tmpBottle.attr[param].score',param,  stats.variance([_bottleWeight, _queryWeight]))
             _tmpBottle.attr[param].score = stats.variance([_bottleWeight, _queryWeight]);
           }
 
           //tally the score per bottle
-
           for (let param in _tmpBottle.attr) {
             _scoreTotal += _tmpBottle.attr[param].score;
 
           }
+          console.log('-->SCORE TOTAl: ', _scoreTotal);
 
           _tmpBottle.total = _scoreTotal;
           resBottles.push({
@@ -803,7 +815,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
 
         //filter based on threshold
         resBottles = resBottles.filter((el) =>{
-          if (el.score < 13.5){
+          if (el.score < 4){
             return el;
           }
         });
@@ -871,14 +883,15 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
   let missedMsg = originalRequest.text;
   let missedMsgArr = missedMsg.split(' ');
   let cards = [];
-
+  missedMsgArr = stopword.removeStopwords(missedMsgArr);
   let options = {
     limit: 9,
+    order: 'title ASC',
     where: {
       $or: (function() {
         let _tmparr = [];
         missedMsgArr.forEach((key) => {
-          if (key.length > 2 && ('and or has with bit'.indexOf(key)) !== 0) {
+          if (key.length > 3) {
             _tmparr.push({
               title: {
                 $iLike: '%' + key + '%',
@@ -890,6 +903,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
       }()),
     },
   };
+  console.log(options)
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Intents')
     .ttl(config.get('CACHE_TIME'));
@@ -1052,6 +1066,7 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
 
 const handleResponse = ({uid, messages}) => {
   let {type, speech, replies, title, cards, imageUrl, buttons} = messages.shift();
+
   let msgData = {};
   let promise;
 
@@ -1193,7 +1208,9 @@ const sendAsUserToSlack = ({uid, text}) => {
       }
     });
   })
-  .catch(errorHandler);
+  .catch((err)=>{
+    console.log(err);
+  });
 };
 
 bot.start(process.env.PORT || 3000);

@@ -57,7 +57,8 @@
     "shell-arguments": "^1.0.4",
     "shortid": "^2.2.8",
     "slack-node": "^0.1.8",
-    "smooch-core": "^3.5.0"
+    "smooch-core": "^3.5.0",
+    "stopword": "^0.1.1"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",
