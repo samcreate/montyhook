@@ -137,6 +137,7 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
                 channel: user.Channel.channel_id,
                 user: 'U4NBETPQS',
               }, function(err, response) {
+
                 if (response.ok === true) {
                   console.log('all good, lets go');
                   resolve(user.Channel);
@@ -273,6 +274,18 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
         });
 
       });
+    })
+    .then(()=>{
+      console.log('set channel to arhived false');
+      db.Channel.findOne({
+        where: {
+          channel_id: channelID
+        },
+      })
+      .then((channel)=>{
+        channel.archived = false;
+        channel.save();
+      })
     })
     .catch((err) => {
       console.log('err', err);
