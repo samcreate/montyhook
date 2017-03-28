@@ -903,7 +903,6 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
       }()),
     },
   };
-  console.log(options)
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Intents')
     .ttl(config.get('CACHE_TIME'));
