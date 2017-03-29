@@ -499,6 +499,68 @@ bot.app.post('/sendintent', (req, res, next) => {
       return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
     });
 });
+bot.app.get('/search', (req, res, next) => {
+  req.body.text = 'chicken 2015';
+  let searchTerms = req.body.text.split(' ');
+  let intentSearchOptions = {
+    order: 'title ASC',
+    limit: 10,
+    where: {
+      $or: (function() {
+        let _tmparr = [];
+        searchTerms.forEach((key) => {
+          if (key.length > 3) {
+            _tmparr.push({
+              title: {
+                $iLike: '%' + key + '%',
+              },
+            });
+          }
+        });
+        return _tmparr;
+      }()),
+    },
+  };
+  db.Intents.findAll(intentSearchOptions)
+  .then((results)=>{
+    console.log('Intents resluts: ',results.length);
+    let wineSearchOptions = {
+      limit: 10,
+      where: {
+        $or: (function() {
+          let _tmparr = [];
+          searchTerms.forEach((key) => {
+            if (key.length > 3) {
+              _tmparr.push({
+                name: {
+                  $iLike: '%' + key + '%',
+                },
+              });
+              _tmparr.push({
+                producer: {
+                  $iLike: '%' + key + '%',
+                },
+              });
+              _tmparr.push({
+                vintage: {
+                  $iLike: '%' + key + '%',
+                },
+              });
+            }
+          });
+          return _tmparr;
+        }()),
+      },
+    };
+    return db.Wines.findAll(wineSearchOptions);
+  })
+  .then((results)=>{
+    console.log('Wine resluts: ',results.length);
+  })
+  .catch((err)=>{
+    console.log(err);
+  })
+});
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
     dashbot.logIncoming(req.body);
