@@ -125,7 +125,7 @@ class PostBacksHandler extends EventEmitter {
               _messages.push({
                 type: 2,
                 title: 'In the meantime, can I can help with something else?',
-                replies: ['🍷 Find a wine', '🤖 How it works'],
+                replies: ['📖 Back to menu', '🤖 How it works'],
               });
 
               resolve({
