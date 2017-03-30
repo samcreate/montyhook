@@ -260,6 +260,12 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
           text: `_\`/sendintent 33\` to send an intent flow to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
+        _response.push({
+          fallback: 'ARRR.',
+          color: '#36a64f',
+          text: `_\`/sendtada 222\` to send a tada to ${ourUser.first_name}_`,
+          mrkdwn_in: ['text', 'pretext'],
+        });
         montySlack.api('chat.postMessage', {
           text: 'User Info:',
           attachments: JSON.stringify(_response),
@@ -785,7 +791,22 @@ bot.on('attachment', (payload, chat) => {
     chat.say('👍',{typing:true});
   }
   if (payload.message.attachments[0].type === 'image' && payload.message.hasOwnProperty('sticker_id') === false){
-    chat.say('I wish I could see but I was born without 👁👁',{typing:true});
+    let imageCopyRes = [
+      'Nice 📸 . Would you like me to send it to sommelier for their thoughts?',
+      'Lovely 📸. Shall I send it to a sommelier for their thoughts?',
+      'Smashing 📸. Do you want me to send it to a sommelier for their thoughts?',
+    ];
+    chat.say({
+      text: imageCopyRes[Math.floor(Math.random() * imageCopyRes.length)],
+      buttons: [{
+        'type': 'postback',
+        'payload': 'IMAGECHECK~' + JSON.stringify({
+          image: payload.message.attachments[0].payload.url,
+        }),
+        'title': 'Ask now 🛎️',
+      }],
+    },{typing: true});
+
   }
   if (payload.message.attachments[0].type === 'audio'){
     chat.say('I wish I could hear but I was born without 👂\'s',{typing:true});
@@ -874,6 +895,16 @@ bot.on('postback', (payload) => {
       .then(handleResponse)
       .catch(errorHandler);
   }
+
+  if (buttonData.indexOf('IMAGECHECK') !== -1) {
+    postBacks.imageCheck({
+      queryParams,
+      uid,
+    })
+      .then(handleResponse)
+      .catch(errorHandler);
+  }
+
   if (['FIND_WINEBY_STYLE', 'EXPLORE_VARIETALS', 'HELP', 'FIND_A_WINE','HOW_IT_WORKS','ABOUT_MONTYS_PICKS'].indexOf(buttonData.split('~')[0]) !== -1) {
     APIAI.get({
       uid,

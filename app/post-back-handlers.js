@@ -43,6 +43,51 @@ class PostBacksHandler extends EventEmitter {
     });
   }
 
+  imageCheck({queryParams, uid}) {
+    let _image = queryParams.image;
+    let _messages = [];
+    let _attachments = [];
+    _attachments.push(
+      {
+        pretext: 'Help user with an image?',
+        title: 'Open Chat? 🤳',
+        title_link: `https://${config.get('HOST')}/startchat/${uid}`,
+        image_url: queryParams.image,
+      }
+    );
+    return new Promise((resolve, reject) => {
+      _messages.push({
+        speech: 'I\'m on it.',
+        type: 0,
+      });
+      _messages.push({
+        speech: 'I\'ll get back to you ASAP! 🚀',
+        type: 0,
+      });
+      _messages.push({
+        type: 2,
+        title: 'In the meantime, can I can help with something else?',
+        replies: ['📖 Back to menu', '🤖 How it works'],
+      });
+      this.slack.api('chat.postMessage', {
+        text: 'Image Check!',
+        attachments: JSON.stringify(_attachments),
+        username: 'Monty\'s Pager',
+        icon_emoji: ':pager:',
+        channel: config.get('SLACK_CHANNEL'),
+      }, function(err, response) {
+        if (response.ok){
+          resolve({
+            uid,
+            messages: _messages,
+          });
+        } else {
+          reject(response);
+        }
+      });
+    });
+  }
+
   notifySommelier({queryParams, uid}) {
     let fbData;
     let _messages = [];
