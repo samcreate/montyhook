@@ -499,12 +499,14 @@ bot.app.post('/sendintent', (req, res, next) => {
       return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
     });
 });
-bot.app.get('/search', (req, res, next) => {
-  req.body.text = 'chicken 2015';
+bot.app.post('/search', (req, res, next) => {
+
+
+  let slackResponse = [];
   let searchTerms = req.body.text.split(' ');
   let intentSearchOptions = {
     order: 'title ASC',
-    limit: 10,
+    limit: 5,
     where: {
       $or: (function() {
         let _tmparr = [];
@@ -524,13 +526,30 @@ bot.app.get('/search', (req, res, next) => {
   db.Intents.findAll(intentSearchOptions)
   .then((results)=>{
     console.log('Intents resluts: ',results.length);
+    if (results && results.length >= 1){
+      slackResponse.push({
+        fallback: `Montymin Results.`,
+        text: '*Intents resluts:*',
+        color: '#36a64f',
+        mrkdwn_in: ['text'],
+      });
+      results.forEach((item)=>{
+        slackResponse.push(
+          {
+            fallback: `Montymin Results.`,
+            text: `   <https://${config.get('HOSTADMIN')}/intents/edit/${item.id}|${item.title.substring(0,35)}...> \`${item.id}\``,
+            mrkdwn_in: ['text'],
+          }
+        )
+      });
+    }
     let wineSearchOptions = {
-      limit: 10,
+      limit: 5,
       where: {
         $or: (function() {
           let _tmparr = [];
           searchTerms.forEach((key) => {
-            if (key.length > 3) {
+            if (key.length >= 3) {
               _tmparr.push({
                 name: {
                   $iLike: '%' + key + '%',
@@ -541,11 +560,25 @@ bot.app.get('/search', (req, res, next) => {
                   $iLike: '%' + key + '%',
                 },
               });
-              _tmparr.push({
-                vintage: {
-                  $iLike: '%' + key + '%',
-                },
-              });
+              if (!isNaN(parseInt(key))){
+                _tmparr.push({
+                  vintage: {
+                    $eq: '%' + key + '%',
+                  },
+                });
+              }
+              if (key === 'white' || key === 'red' || key === 'rose'){
+                _tmparr.push({
+                  type: {
+                    $eq: key,
+                  },
+                });
+              }
+              if (key === 'sparkling' || key === 'dessert' || key === 'fortified' || key === 'natural'){
+                let _style = {};
+                _style[key] = true;
+                _tmparr.push(_style);
+              }
             }
           });
           return _tmparr;
@@ -556,10 +589,95 @@ bot.app.get('/search', (req, res, next) => {
   })
   .then((results)=>{
     console.log('Wine resluts: ',results.length);
+    if (results && results.length >= 1){
+      slackResponse.push({
+        fallback: `Montymin Results.`,
+        text: '*Wine resluts:*',
+        color: '#bad',
+        mrkdwn_in: ['text'],
+      });
+      results.forEach((item)=>{
+        let _wineTitle = `${item.vintage} ${item.producer}, ${item.name}`;
+        slackResponse.push(
+          {
+            fallback: `Montymin Results.`,
+            text: `<https://${config.get('HOSTADMIN')}/wines/edit/${item.id}|${_wineTitle.substring(0,35)}...> \`${item.id}\``,
+            mrkdwn_in: ['text'],
+          }
+        )
+      });
+    }
+    let varietalSearchOptions = {
+      limit: 5,
+      where: {
+        $or: (function() {
+          let _tmparr = [];
+          searchTerms.forEach((key) => {
+            if (key.length >= 3) {
+              _tmparr.push({
+                name: {
+                  $iLike: '%' + key + '%',
+                },
+              });
+              _tmparr.push({
+                synonyms: {
+                  $iLike: '%' + key + '%',
+                },
+              });
+            }
+          });
+          return _tmparr;
+        }()),
+      },
+    };
+    return db.Varietals.findAll(varietalSearchOptions);
+  })
+  .then((results) => {
+    console.log('Card resluts: ',results.length);
+    if (results && results.length >= 1){
+      slackResponse.push({
+        fallback: `Montymin Results.`,
+        text: '*Card resluts:*',
+        color: '#36a64f',
+        mrkdwn_in: ['text'],
+      });
+      results.forEach((item)=>{
+        slackResponse.push(
+          {
+            fallback: `Montymin Results.`,
+            text: `   <https://${config.get('HOSTADMIN')}/varietals/edit/${item.id}|${item.name.substring(0,35)}...> \`${item.id}\``,
+            mrkdwn_in: ['text'],
+          }
+        )
+      });
+    }
+    if(slackResponse.length < 1){
+      slackResponse.push(
+        {
+          fallback: `Montymin Results.`,
+          text: `_ Zero results for: ${searchTerms.toString()}_`,
+          mrkdwn_in: ['text'],
+        }
+      )
+    }
+    slack.api('chat.postMessage', {
+      attachments: JSON.stringify(slackResponse),
+      username: 'Monty\'s Montymin Search',
+      icon_emoji: ':mag:',
+      channel: req.body.channel_id,
+    }, function(err, response) {
+      if (response.ok === true) {
+
+      } else {
+        console.log(response);
+      }
+    });
+
   })
   .catch((err)=>{
     console.log(err);
-  })
+  });
+  return  res.status(200).send('');
 });
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
