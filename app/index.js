@@ -459,7 +459,7 @@ bot.app.post('/getuser', (req, res, next) => {
       });
       slack.api('chat.postMessage', {
         attachments: JSON.stringify(_response),
-        username: 'Monty\'s Search',
+        username: 'Monty\'s User Search',
         icon_emoji: ':mag:',
         channel: req.body.channel_id,
       }, function(err, response) {
@@ -663,7 +663,7 @@ bot.app.post('/search', (req, res, next) => {
     slack.api('chat.postMessage', {
       attachments: JSON.stringify(slackResponse),
       username: 'Monty\'s Montymin Search',
-      icon_emoji: ':mag:',
+      icon_emoji: ':sleuth_or_spy::skin-tone-5:',
       channel: req.body.channel_id,
     }, function(err, response) {
       if (response.ok === true) {
