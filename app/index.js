@@ -856,7 +856,7 @@ bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pa
 
 
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
-  let {locations, vintage, properties, styles, varietals, type, price, direction} = apiResponse.result.parameters;
+  let {locations, vintage, properties, styles, varietals, type, price, direction, price_threshold} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
   let $locOR = [];
   let $varOR = [];
@@ -869,6 +869,11 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   vintage = `%${tmpYear}%`;
   varietals = varietals || [''];
   locations = locations || [''];
+  console.log('here',price_threshold.length, price_threshold, 'hi')
+  //convert the value from api.ai to an array
+  if (price_threshold && price_threshold.length > 2 ){
+    price_threshold = price_threshold.split('-');
+  }
 
   if (type.length < 1) {
     type = types;
@@ -941,9 +946,10 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   };
 
   // for wines between 10 and 15 dolloars
-  if ( price.length > 1){
+  if ( price.length > 1 || price_threshold){
     //limit it to two numbers and sort for lesst to greatest
-    price = price.slice(0,2).sort((a, b) => a - b);
+    price = price_threshold || price.slice(0,2).sort((a, b) => a - b);
+    console.log('price_threshold',typeof price_threshold)
     _where.$or[0].price = {
       $between: price,
     };
@@ -955,6 +961,11 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       $lte: price[0],
     };
     if (direction && direction === 'greaterthan'){
+      _where.$or[0].price = {
+        $gte: price[0],
+      };
+    }
+    if (price_threshold){
       _where.$or[0].price = {
         $gte: price[0],
       };
