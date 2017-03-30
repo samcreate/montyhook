@@ -529,7 +529,7 @@ bot.app.post('/search', (req, res, next) => {
     if (results && results.length >= 1){
       slackResponse.push({
         fallback: `Montymin Results.`,
-        text: '*Intents resluts:*',
+        text: `*Intents resluts for :* ${searchTerms.toString()}`,
         color: '#36a64f',
         mrkdwn_in: ['text'],
       });
@@ -592,7 +592,7 @@ bot.app.post('/search', (req, res, next) => {
     if (results && results.length >= 1){
       slackResponse.push({
         fallback: `Montymin Results.`,
-        text: '*Wine resluts:*',
+        text: `*Wine resluts for :* ${searchTerms.toString()}`,
         color: '#bad',
         mrkdwn_in: ['text'],
       });
@@ -636,8 +636,8 @@ bot.app.post('/search', (req, res, next) => {
     console.log('Card resluts: ',results.length);
     if (results && results.length >= 1){
       slackResponse.push({
-        fallback: `Montymin Results.`,
-        text: '*Card resluts:*',
+        fallback: `Montymin Results for: ${searchTerms.toString()}.`,
+        text: `*Card resluts for :* ${searchTerms.toString()}`,
         color: '#36a64f',
         mrkdwn_in: ['text'],
       });
