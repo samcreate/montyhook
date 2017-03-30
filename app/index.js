@@ -1100,6 +1100,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
   let missedMsg = originalRequest.text;
   let missedMsgArr = missedMsg.split(' ');
   let cards = [];
+
   missedMsgArr = stopword.removeStopwords(missedMsgArr);
   let options = {
     limit: 9,
@@ -1136,8 +1137,13 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           type: 0,
         });
       } else {
+        let swipeRright = [
+          'I don’t know that yet. Swipe for close matches or ask a sommelier. 👉',
+          'I don’t have a match. Swipe for near misses or ask a sommelier. 👉',
+          'I am yet to learn that. Swipe for something similar or ask a sommelier. 👉',
+        ];
         responses.push({
-          speech: 'Swipe to see if there\'s a close match, or I can ask a sommelier. 👉',
+          speech: swipeRright[Math.floor(Math.random() * swipeRright.length)],
           type: 0,
         });
       }
