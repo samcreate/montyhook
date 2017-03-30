@@ -679,6 +679,62 @@ bot.app.post('/search', (req, res, next) => {
   });
   return  res.status(200).send('');
 });
+bot.app.post('/sendtada', (req, res, next) => {
+
+  let intentId = parseInt(req.body.text);
+  let usersChannel;
+  let fbResponses;
+  db.Channel.findOne({
+    where: {
+      channel_id: req.body.channel_id,
+    },
+  })
+    .then((channel) => {
+      if (channel){
+        usersChannel = channel;
+        return db.Intents.findById(intentId);
+      } else {
+        return res.status(200).send('☹️ Something went wrong, try again plzzz!');
+      }
+    })
+    .then((intent) =>{
+      if (intent){
+        let intentTitle = intent.title.split(',')[0];
+        fbResponses = [
+          `✨ Tada! Your wine recommendation for: '${intentTitle}' is ready. Check it out!`,
+          `🎉 Woot! The results are in. Find out what wines are best for: '${intentTitle}'.`,
+          `👏 Bravo! My sommeliers have found the perfect wine match for: '${intentTitle}'.`,
+        ];
+        let resCards = [];
+        resCards.push(fb.cardGen(
+          fbResponses[Math.floor(Math.random() * fbResponses.length)],
+          null,
+          intent.bubble1 || '',
+          [{
+            "type": 'postback',
+            "title": 'See more 👀',
+            "payload": 'MISSINGINTENT_FOLLOWUP~'+JSON.stringify({text:intentTitle})
+          }]
+        ));
+        return handleResponse({
+          uid: usersChannel.UserUid,
+          messages: [
+            {
+              cards: resCards,
+              type: 1,
+            },
+          ],
+        });
+      } else {
+        return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
+      }
+    })
+    .then(()=>{
+      res.status(200).send('Tada! sent! 🎉 💌 ✈️');
+    })
+    .catch(errorHandler);
+
+});
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
     dashbot.logIncoming(req.body);
