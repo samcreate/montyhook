@@ -856,7 +856,7 @@ bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pa
 
 
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
-  let {locations, vintage, properties, styles, varietals, type} = apiResponse.result.parameters;
+  let {locations, vintage, properties, styles, varietals, type, price, direction} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
   let $locOR = [];
   let $varOR = [];
@@ -874,6 +874,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     type = types;
   }
   console.log('properties1-->', properties);
+
   properties = properties.map(prop => {
     let newProp = {};
     prop = prop.toLowerCase();
@@ -917,6 +918,48 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     .model('Wines')
     .ttl(config.get('CACHE_TIME'));
     console.log('$varOR',$varOR)
+
+  let _where = {
+    $or: [
+      {
+        '$Varietals.id$': {
+          $or: $varOR,
+        },
+        '$Locations.name$': {
+          $or: $locOR,
+        },
+        vintage: {
+          like: vintage,
+        },
+        dessert: dessertBool,
+        sparkling: sparklingBool,
+        fortified: fortifiedBool,
+        natural: naturalBool,
+        type: type,
+      },
+    ],
+  };
+
+  // for wines between 10 and 15 dolloars
+  if ( price.length > 1){
+    //limit it to two numbers and sort for lesst to greatest
+    price = price.slice(0,2).sort((a, b) => a - b);
+    _where.$or[0].price = {
+      $between: price,
+    };
+  }
+
+  //for wines greater or less than. defualt is lessthan
+  if ( price.length === 1) {
+    _where.$or[0].price = {
+      $lte: price[0],
+    };
+    if (direction && direction === 'greaterthan'){
+      _where.$or[0].price = {
+        $gte: price[0],
+      };
+    }
+  }
   db.Wines.findAll({
     include: [
       {
@@ -933,26 +976,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
         },
       },
     ],
-    where: {
-      $or: [
-        {
-          '$Varietals.id$': {
-            $or: $varOR,
-          },
-          '$Locations.name$': {
-            $or: $locOR,
-          },
-          vintage: {
-            like: vintage,
-          },
-          dessert: dessertBool,
-          sparkling: sparklingBool,
-          fortified: fortifiedBool,
-          natural: naturalBool,
-          type: type,
-        },
-      ],
-    },
+    where: _where,
   })
     .then((bottles) => {
       //
