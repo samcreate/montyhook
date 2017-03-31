@@ -56,8 +56,15 @@ module.exports = (bottles, queryParams, uid, slack) => {
       }, function(err, response) {
         console.log('slack.api', response, err, config.get('SLACKYPOO'));
       });
+
+      let lowStockReplies = [
+        'I\'m sorry. 🤔 We currently don\'t have anything in stock that matches your request.',
+        'Hmm. 😔 We don\'t actually have anything in stock that matches your request.',
+        'Oh no! 😱 We seem to have nothing in stock that matches your request.',
+      ];
+
       let lowStockMessage = {
-        speech: 'I\'m sorry we currently don\'t have that in stock.',
+        speech: lowStockReplies[Math.floor(Math.random() * lowStockReplies.length)],
         type: 0,
       };
       resolve({
