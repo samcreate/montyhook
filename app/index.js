@@ -199,7 +199,9 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
     })
     .then((setResponse) => {
       channelID = setResponse.channel_id;
-      res.redirect(`slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51`);
+      let _html = `<html><head> <meta http-equiv="content-type" content="text/html; charset=UTF-8"> <meta name="robots" content="noindex, nofollow"> <meta name="googlebot" content="noindex, nofollow"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Monty Slack Opener</title></head><body> <style> html, body { height: 100%; margin: 0px; font-family: "andale mono"; } #monty { margin-top: 30px; } h2{ font-size: 34px;} #message { background: white; width: 380px; height: 200px; border-radius: 15px; box-shadow: 0px 0px 0px 6px rgba(0, 0, 0, 0.1); position: absolute; top: 0; bottom: 0; left: 0; right: 0; margin: auto; padding: 20px; text-align: center; line-height: 31px; letter-spacing: 0px; } a { letter-spacing: 0px; text-decoration: none; }</style><div id="wrapper" style="width: 100%; height: 100%; background: linear-gradient(0deg,#ff0566,#ff3737);"> <div id="message"> <div id="monty"> <h2>🎉</h2><h3> Slack Channel opended. </h3> <h4>Plz close this window.</h4> </div> </div></div><script>window.location = 'slack://channel?id=${setResponse.channel_id}&team=T1UTGQF51';</script></body></html>`;
+      res.send(_html);
+
     })
     .then(() =>{
       return new Promise((resolve, reject) => {
