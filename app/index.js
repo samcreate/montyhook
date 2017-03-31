@@ -95,6 +95,8 @@ bot.app.post('/send-message', (req, res, next) =>{
 
       }
     });
+  }).catch((err)=>{
+
   });
 
   //reset the cache time
@@ -427,10 +429,10 @@ bot.app.post('/sendcards', (req, res, next) => {
   });
 });
 bot.app.post('/getuser', (req, res, next) => {
+  console.log('/getuser',req.body.text);
   let name = req.body.text.split(' ').map(function(item) {
     return item.trim();
   });
-  console.log(name);
   let _where = {
     $and: [],
   };
@@ -465,17 +467,20 @@ bot.app.post('/getuser', (req, res, next) => {
           }
         );
       });
-      slack.api('chat.postMessage', {
-        attachments: JSON.stringify(_response),
-        username: 'Monty\'s User Search',
-        icon_emoji: ':sleuth_or_spy::skin-tone-5:',
-        channel: req.body.channel_id,
-      }, function(err, response) {
-        if (response.ok === true) {
-
-        } else {
-          console.log(response);
-        }
+      res.status(200).json({
+        response_type: 'ephemeral',
+        text: 'Results: ',
+        attachments: _response,
+      });
+    } else {
+      res.status(200).json({
+        response_type: 'ephemeral',
+        text: 'Results: ',
+        attachments: [{
+          fallback: '',
+          color: '#FF0000',
+          text: `No user found!`,
+        }],
       });
     }
   })
@@ -483,7 +488,6 @@ bot.app.post('/getuser', (req, res, next) => {
     console.log(err);
     res.status(200).send(err);
   });
-  res.status(200).send('');
 });
 bot.app.post('/sendintent', (req, res, next) => {
   let intentId = parseInt(req.body.text);
@@ -668,24 +672,20 @@ bot.app.post('/search', (req, res, next) => {
         }
       )
     }
-    slack.api('chat.postMessage', {
-      attachments: JSON.stringify(slackResponse),
-      username: 'Monty\'s Montymin Search',
-      icon_emoji: ':mag:',
-      channel: req.body.channel_id,
-    }, function(err, response) {
-      if (response.ok === true) {
-
-      } else {
-        console.log(response);
-      }
+    return res.status(200).json({
+      response_type: 'ephemeral',
+      text: 'Results: ',
+      attachments: slackResponse,
     });
+
 
   })
   .catch((err)=>{
-    console.log(err);
+    return res.status(200).json({
+      response_type: 'ephemeral',
+      text: 'Results: ' + JSON.stringify(err),
+    });
   });
-  return  res.status(200).send('');
 });
 bot.app.post('/sendtada', (req, res, next) => {
 
