@@ -20,7 +20,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
             },
             {
               "type": "postback",
-              "title": "🍇 Explore varietals",
+              "title": "🍇 Explore wines",
               "payload": "EXPLORE_VARIETALS~{}"
             },
             {
@@ -38,4 +38,4 @@ curl -X POST -H "Content-Type: application/json" -d '{
       ]
     }
   ]
-}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAANn80S1lzoBALZBSvcG5SUBiNGIgbE5ZBLJp4cVnPDU9wyC0ZAFUfOhwa3I7ZAmMKjO3YDDNNKUFCr6XnrelgYjJ8YtXVvmJFtNsIB4S9nZAsoGRrIulZA0k3SOrKCn7CdIezFRZCFzLSaZCRgIcaimw5kX0t0pK9pGlIwu1g2uogZDZD"
+}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAALmTHli9KUBAJiCNZAR5E70pU3DYIfcTerzYsFs9FxEWzaMfPhhGKgsTe7NZAVZCXsviSajzO1NTy1oZCs2Dm2ZCwjGZAVVYiVKAstsDz68jApaXuCL52zRXZAw3HcquopwzPPiqZBBQdH8M4k8Ou2zi4wk7jJZAcyZBUsF0ptSKZB7gZDZD"
