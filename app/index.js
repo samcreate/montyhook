@@ -229,7 +229,7 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
         _response.push({
           fallback: 'ARRR.',
           color: '#36a64f',
-          text: '_`/m [TEXT]` to reply_',
+          text: '_`/r [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
@@ -1528,7 +1528,7 @@ const sendAsUserToSlack = ({uid, text}) => {
           fallback: `sent a message.`,
           color: '#36a64f',
           pretext: `${text}`,
-          text: '_Use `/m [TEXT]` to reply_',
+          text: '_Use `/r [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         },
       ]),
