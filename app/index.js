@@ -430,6 +430,18 @@ bot.app.post('/sendcards', (req, res, next) => {
 });
 bot.app.post('/getuser', (req, res, next) => {
   console.log('/getuser',req.body.text);
+  if (req.body.text.toLowerCase() === 'donald trump'){
+    return res.status(200).json({
+      response_type: 'ephemeral',
+      text: '!!!',
+      attachments: [{
+        title: 'Here\'s Donny! :tangerine:',
+        title_link: `https://files.slack.com/files-pri/T1UTGQF51-F4T1U9YS0/pasted_image_at_2017_03_31_04_05_pm.png?pub_secret=d6b3ec8f96`,
+        image_url: 'https://files.slack.com/files-pri/T1UTGQF51-F4T1U9YS0/pasted_image_at_2017_03_31_04_05_pm.png?pub_secret=d6b3ec8f96',
+      }],
+    });
+
+  }
   let name = req.body.text.split(' ').map(function(item) {
     return item.trim();
   });
