@@ -220,6 +220,11 @@ class PostBacksHandler extends EventEmitter {
               'payload': 'SHOPBY_VARIETAL~' + JSON.stringify(queryParams.wine_params),
               'title': 'Browse 👀',
             });
+            tmplButtons.push({
+              'type': 'postback',
+              'payload': 'MENU~' + JSON.stringify({trigger:"menu"}),
+              'title': 'Go to menu 📖',
+            });
           }
           let _messages = [];
           if (queryParams.step === 1 && varietal.hero !== null) {
