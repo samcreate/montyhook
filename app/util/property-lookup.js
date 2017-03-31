@@ -110,10 +110,10 @@ module.exports = {
   unoaked: {
     ResidualSugar: 3,
     Body: 3,
-    Acidity: 3,
+    Acidity: 4,
     Oak: 1,
     Intensity: 3,
-    Tannin: 3,
+    Tannin: 2,
     Fruit: 3,
   },
   oaked: {
