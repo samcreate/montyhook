@@ -972,7 +972,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   vintage = `%${tmpYear}%`;
   varietals = varietals || [''];
   locations = locations || [''];
-  console.log('here',price_threshold.length, price_threshold, 'hi')
+  
   //convert the value from api.ai to an array
   if (price_threshold && price_threshold.length > 2 ){
     price_threshold = price_threshold.split('-');
