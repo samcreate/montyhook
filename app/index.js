@@ -1059,7 +1059,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   }
 
   //for wines greater or less than. defualt is lessthan
-  if ( price.length === 1) {
+  if (price && price.length === 1) {
     _where.$or[0].price = {
       $lte: price[0],
     };
