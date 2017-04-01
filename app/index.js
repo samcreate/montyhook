@@ -972,7 +972,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   vintage = `%${tmpYear}%`;
   varietals = varietals || [''];
   locations = locations || [''];
-  
+
   //convert the value from api.ai to an array
   if (price_threshold && price_threshold.length > 2 ){
     price_threshold = price_threshold.split('-');
@@ -1049,7 +1049,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   };
 
   // for wines between 10 and 15 dolloars
-  if ( price.length > 1 || price_threshold){
+  if (price &&  price.length > 1 || price_threshold){
     //limit it to two numbers and sort for lesst to greatest
     price = price_threshold || price.slice(0,2).sort((a, b) => a - b);
     console.log('price_threshold',typeof price_threshold)
