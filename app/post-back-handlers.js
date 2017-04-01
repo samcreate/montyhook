@@ -8,11 +8,18 @@ import cacher from 'sequelize-redis-cache';
 import wineResGEN from './util/wineprodres-gen';
 import wineCardGen from './util/wine-card-gen';
 import scoreBottles from './util/score-bottles';
+import shortid from 'shortid';
+import Cache from 'express-redis-cache';
+
 
 class PostBacksHandler extends EventEmitter {
   constructor() {
     super();
     this.slack = new Slack(config.get('SLACKYPOO'));
+    this.cache = Cache({
+      client: global.redisCache,
+      expire: 14400
+    });
   }
 
 
@@ -69,22 +76,33 @@ class PostBacksHandler extends EventEmitter {
         title: 'In the meantime, can I can help with something else?',
         replies: ['📖 Back to menu', '🤖 How it works'],
       });
-      this.slack.api('chat.postMessage', {
-        text: 'Image Check!',
-        attachments: JSON.stringify(_attachments),
-        username: 'Monty\'s Pager',
-        icon_emoji: ':pager:',
-        channel: config.get('SLACK_CHANNEL'),
-      }, function(err, response) {
-        if (response.ok){
-          resolve({
-            uid,
-            messages: _messages,
-          });
-        } else {
-          reject(response);
-        }
-      });
+      this._checkIfAlreadyBeenNotified(queryParams.id)
+        .then(({sommNotified}) => {
+          if (sommNotified === false) {
+
+            this.slack.api('chat.postMessage', {
+              text: 'Image Check!',
+              attachments: JSON.stringify(_attachments),
+              username: 'Monty\'s Pager',
+              icon_emoji: ':pager:',
+              channel: config.get('SLACK_CHANNEL'),
+            }, function(err, response) {
+              if (response.ok) {
+                resolve({
+                  uid,
+                  messages: _messages,
+                });
+
+              } else {
+                reject(response);
+              }
+            });
+
+          } else {
+            this._notifyHelpIsComing(uid, resolve);
+          }
+        })
+
     });
   }
 
@@ -99,7 +117,10 @@ class PostBacksHandler extends EventEmitter {
         .then((user) => {
           fbData = user;
           return db.PastConversation.create({
-            body: {queryParams, uid},
+            body: {
+              queryParams,
+              uid
+            },
           });
         })
         .then((pastConvo) => {
@@ -138,7 +159,7 @@ class PostBacksHandler extends EventEmitter {
               _response.push({
                 fallback: 'Chat with user?',
                 color: '#36a64f',
-                title:  `👉 Open a chat with: ${fbData.fullname} 🤳`,
+                title: `👉 Open a chat with: ${fbData.fullname} 🤳`,
                 title_link: `https://${config.get('HOST')}/startchat/${uid}`,
               });
               results.forEach((intent) => {
@@ -150,33 +171,40 @@ class PostBacksHandler extends EventEmitter {
                   }
                 );
               });
-              this.slack.api('chat.postMessage', {
-                text: 'Help Monty be great again!',
-                attachments: JSON.stringify(_response),
-                username: 'Monty\'s Pager',
-                icon_emoji: ':pager:',
-                channel: config.get('SLACK_CHANNEL'),
-              }, function(err, response) {
-                console.log('slack.api', response, err, config.get('SLACKYPOO'));
-              });
-              _messages.push({
-                speech: 'I\'m on it.',
-                type: 0,
-              });
-              _messages.push({
-                speech: 'I\'ll get back to you ASAP! 🚀',
-                type: 0,
-              });
-              _messages.push({
-                type: 2,
-                title: 'In the meantime, can I can help with something else?',
-                replies: ['📖 Back to menu', '🤖 How it works'],
-              });
+              this._checkIfAlreadyBeenNotified(queryParams.id)
+                .then(({sommNotified}) => {
+                  if (sommNotified === false) {
+                    this.slack.api('chat.postMessage', {
+                      text: 'Help Monty be great again!',
+                      attachments: JSON.stringify(_response),
+                      username: 'Monty\'s Pager',
+                      icon_emoji: ':pager:',
+                      channel: config.get('SLACK_CHANNEL'),
+                    }, function(err, response) {
+                      console.log('slack.api', response, err, config.get('SLACKYPOO'));
+                    });
+                    _messages.push({
+                      speech: 'I\'m on it.',
+                      type: 0,
+                    });
+                    _messages.push({
+                      speech: 'I\'ll get back to you ASAP! 🚀',
+                      type: 0,
+                    });
+                    _messages.push({
+                      type: 2,
+                      title: 'In the meantime, can I can help with something else?',
+                      replies: ['📖 Back to menu', '🤖 How it works'],
+                    });
 
-              resolve({
-                uid,
-                messages: _messages,
-              });
+                    resolve({
+                      uid,
+                      messages: _messages,
+                    });
+                  } else {
+                    this._notifyHelpIsComing(uid, resolve);
+                  }
+                })
             })
             .catch((err) => {
               reject({
@@ -222,7 +250,9 @@ class PostBacksHandler extends EventEmitter {
             });
             tmplButtons.push({
               'type': 'postback',
-              'payload': 'MENU~' + JSON.stringify({trigger:"menu"}),
+              'payload': 'MENU~' + JSON.stringify({
+                  trigger: "menu"
+                }),
               'title': 'Go to menu 📖',
             });
           }
@@ -278,16 +308,16 @@ class PostBacksHandler extends EventEmitter {
       })
         .then((wines) => {
           let wineIDs = [];
-          if( Object.prototype.toString.call( wines ) === '[object Array]' ) {
-              console.log( 'Array!' );
+          if (Object.prototype.toString.call(wines) === '[object Array]') {
+            console.log('Array!');
           }
-          console.log('@@@@@ WinesVarietalsQRY2',WinesVarietalsQRY.cacheHit);
+          console.log('@@@@@ WinesVarietalsQRY2', WinesVarietalsQRY.cacheHit);
           console.log('@@@@@ hereeeeee 2', wines);
 
           wines.forEach((wine) => {
             wineIDs.push(wine.WineId);
           });
-          console.log('wineIDs', wineIDs,queryParams.varietal_id);
+          console.log('wineIDs', wineIDs, queryParams.varietal_id);
           let WinesQY = cacher(db.sequelize, redisCache)
             .model('Wines')
             .ttl(config.get('CACHE_TIME'));
@@ -307,7 +337,7 @@ class PostBacksHandler extends EventEmitter {
             }],
           });
         })
-        .then((bottles) =>{
+        .then((bottles) => {
           return scoreBottles(bottles, queryParams, uid, this.slack);
         })
         .then((response) => {
@@ -320,13 +350,13 @@ class PostBacksHandler extends EventEmitter {
           });
         });
     })
-    .catch((err)=>{
-      console.log('err: ', err);
-      tmpReject({
-        err,
-        uid,
+      .catch((err) => {
+        console.log('err: ', err);
+        tmpReject({
+          err,
+          uid,
+        });
       });
-    });
   }
 
   shopbyVarietalAll({queryParams, uid}) {
@@ -355,7 +385,7 @@ class PostBacksHandler extends EventEmitter {
         .model('Wines')
         .ttl(config.get('CACHE_TIME'));
       WinesQY.findAll(_options)
-        .then((bottles) =>{
+        .then((bottles) => {
           return scoreBottles(bottles, queryParams, uid, this.slack);
         })
         .then((response) => {
@@ -368,6 +398,53 @@ class PostBacksHandler extends EventEmitter {
             uid,
           });
         });
+    });
+  }
+
+  _addToSommCache(id) {
+    this.cache.add(`somm_click:${id}`, JSON.stringify({
+      id: id
+    }), {
+      type: 'json',
+    }, (error, added) => {
+    });
+  }
+
+  _checkIfAlreadyBeenNotified(id) {
+    return new Promise((resolve, reject) => {
+      this.cache.get(`somm_click:${id}`, (error, somm) => {
+        if (somm.length >= 1) {
+          resolve({
+            sommNotified: true
+          });
+        } else {
+          resolve({
+            sommNotified: false
+          });
+          this._addToSommCache(id);
+        }
+      });
+    });
+  }
+
+  _notifyHelpIsComing(uid, resolve) {
+    let _messages = [];
+    _messages.push({
+      speech: 'It\'s in the queue!',
+      type: 0,
+    });
+    _messages.push({
+      speech: 'I\'ll get back to you ASAP! 🚀',
+      type: 0,
+    });
+    _messages.push({
+      type: 2,
+      title: 'In the meantime, can I can help with something else?',
+      replies: ['📖 Back to menu', '🤖 How it works'],
+    });
+    resolve({
+      uid,
+      messages: _messages,
     });
   }
 }

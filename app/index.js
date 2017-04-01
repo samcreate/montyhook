@@ -810,12 +810,14 @@ bot.on('attachment', (payload, chat) => {
       'Lovely 📸. Shall I send it to a sommelier for their thoughts?',
       'Smashing 📸. Do you want me to send it to a sommelier for their thoughts?',
     ];
+
     chat.say({
       text: imageCopyRes[Math.floor(Math.random() * imageCopyRes.length)],
       buttons: [{
         'type': 'postback',
         'payload': 'IMAGECHECK~' + JSON.stringify({
           image: payload.message.attachments[0].payload.url,
+          id: shortid.generate(),
         }),
         'title': 'Ask now 🛎️',
       }],
@@ -1276,6 +1278,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           'type': 'postback',
           'payload': 'SOMMELIER~' + JSON.stringify({
             missedIntent: missedMsg,
+            id: shortid.generate(),
           }),
           'title': 'Ask now 🛎️',
         }]
