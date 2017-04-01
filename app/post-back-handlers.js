@@ -399,7 +399,7 @@ class PostBacksHandler extends EventEmitter {
   }
 
   _addToSommCache(id) {
-    this.cache.add(`somm_click:${id}`, JSON.stringify({
+     global.cache.add(`somm_click:${id}`, JSON.stringify({
       id: id
     }), {
       type: 'json',
@@ -409,7 +409,7 @@ class PostBacksHandler extends EventEmitter {
 
   _checkIfAlreadyBeenNotified(id) {
     return new Promise((resolve, reject) => {
-      this.cache.get(`somm_click:${id}`, (error, somm) => {
+       global.cache.get(`somm_click:${id}`, (error, somm) => {
         if (somm.length >= 1) {
           resolve({
             sommNotified: true
