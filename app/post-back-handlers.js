@@ -16,10 +16,7 @@ class PostBacksHandler extends EventEmitter {
   constructor() {
     super();
     this.slack = new Slack(config.get('SLACKYPOO'));
-    this.cache = Cache({
-      client: global.redisCache,
-      expire: 14400
-    });
+    this.cache = global.cache;
   }
 
 

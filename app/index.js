@@ -28,7 +28,7 @@ global.redisCache = redis.createClient(config.get('REDIS'));
 
 // four hours 14400
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
-let cache = Cache({client: global.redisCache, expire: 14400});
+global.cache = Cache({client: global.redisCache, expire: 14400});
 
 
 redisCache.on('error', (err)=>{
