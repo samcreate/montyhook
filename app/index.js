@@ -287,15 +287,20 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
     })
     .then(()=>{
       console.log('set channel to arhived false');
-      db.Channel.findOne({
+      return db.Channel.findOne({
         where: {
           channel_id: channelID
         },
-      })
-      .then((channel)=>{
-        channel.archived = false;
-        channel.save();
-      })
+      });
+    })
+    .then((channel)=>{
+      console.log('channel');
+      channel.archived = false;
+      channel.updatedAt = new Date();
+       return channel.save();
+    })
+    .then((res) =>{
+      console.log('channel saved!');
     })
     .catch((err) => {
       console.log('err', err);
