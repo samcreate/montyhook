@@ -21,10 +21,10 @@ module.exports = {
     ResidualSugar: 1,
     Body: 3,
     Acidity: 4,
-    Oak: 3,
+    Oak: 2,
     Intensity: 3,
     Tannin: 2,
-    Fruit: 3,
+    Fruit: 2,
   },
   fruity: {
     ResidualSugar: 2,
