@@ -75,11 +75,16 @@ class SlackProxy extends EventEmitter {
     return db.Channel.findOne({
       where: {
         UserUid: uid,
+        archived: false,
       },
     })
       .then((channel) => {
+
+        if (channel === null) return false;
+
         _channel = channel;
-        return new Promise((resolve, reject) => {
+
+        return new Promise((resolve) => {
           //console.log('HELLO1: ', channel.channel_id);
           global.cache.get(`channel:${uid}`, (error, channel) => {
             //console.log('HELLO2: ', channel.channel_id, resolve);
