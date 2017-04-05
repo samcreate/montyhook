@@ -13,7 +13,7 @@ class SlackProxy extends EventEmitter {
     let _response = [];
     let _attachment;
     let _channel;
-    console.log('sendToSlack', msgData, type);
+    //console.log('sendToSlack', msgData, type);
 
     if (type === 0) {
       _attachment = {
@@ -22,10 +22,7 @@ class SlackProxy extends EventEmitter {
         text: msgData.text,
         mrkdwn_in: ['text', 'pretext'],
       };
-    // msgData.text = speech;
-    // promise = bot.say(uid, msgData.text, {
-    //   typing: true,
-    // });
+
     }
     if (type === 1) {
       _attachment = {
@@ -36,19 +33,10 @@ class SlackProxy extends EventEmitter {
         attachment_type: 'default',
         actions: this._cards2Attachments(msgData),
       };
-    // msgData = cards;
-    // promise = bot.sendGenericTemplate(uid, msgData, {
-    //   typing: true,
-    // });
+
     }
     if (type === 2) {
-      // msgData = {
-      //   text: title,
-      //   quickReplies: replies,
-      // };
-      // promise = bot.say(uid, msgData, {
-      //   typing: true,
-      // });
+
       _attachment = {
         text: msgData.text,
         fallback: msgData.text,
@@ -92,12 +80,12 @@ class SlackProxy extends EventEmitter {
       .then((channel) => {
         _channel = channel;
         return new Promise((resolve, reject) => {
-          console.log('HELLO1: ', channel.channel_id);
+          //console.log('HELLO1: ', channel.channel_id);
           global.cache.get(`channel:${uid}`, (error, channel) => {
-            console.log('HELLO2: ', channel.channel_id, resolve);
-            console.log('here?????', channel, uid)
+            //console.log('HELLO2: ', channel.channel_id, resolve);
+            //console.log('here?????', channel, uid)
             if (channel.length >= 1) {
-              console.log('????? 2', channel.channel_id);
+              //console.log('????? 2', channel.channel_id);
               resolve({
                 ok: true
               });
@@ -117,7 +105,7 @@ class SlackProxy extends EventEmitter {
             channel: _channel.channel_id,
           }, function(err, response) {
             if (response.ok === true) {
-              console.log('it worked!!!');
+              //console.log('it worked!!!');
             } else {
 
             }
