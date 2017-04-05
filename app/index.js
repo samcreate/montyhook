@@ -11,9 +11,6 @@ import propLookUp from './util/property-lookup';
 import stats from './util/statistics';
 import redis from 'redis';
 import cacher from 'sequelize-redis-cache';
-import Botmetrics from 'botmetrics';
-import wineResGEN from './util/wineprodres-gen';
-import request from 'request';
 import DashBot from 'dashbot';
 import Cache from 'express-redis-cache';
 import bodyParser from 'body-parser';
@@ -22,6 +19,7 @@ import shortid from 'shortid';
 import wineCardGen from './util/wine-card-gen';
 import cardGen from './util/cards-gen';
 import stopword from 'stopword';
+import slackProxy from './slack-proxy';
 
 
 global.redisCache = redis.createClient(config.get('REDIS'));
@@ -95,7 +93,8 @@ bot.app.post('/send-message', (req, res, next) =>{
 
       }
     });
-  }).catch((err)=>{
+  })
+  .catch(()=>{
 
   });
 
@@ -210,6 +209,7 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
         cache.add(`channel:${uid}`, JSON.stringify({uid}), {
           type: 'json',
         }, (error, added) => {
+          console.log('add channel:',uid,'to cache');
           resolve();
         });
       });
@@ -1467,6 +1467,7 @@ const handleResponse = ({uid, messages}) => {
         messages,
       });
       track(uid,msgData,res);
+      slackProxy.sendToSlack({uid,msgData,type});
     }).catch((err) => {
       //@TODO
       // - Send slack messages
@@ -1479,6 +1480,7 @@ const handleResponse = ({uid, messages}) => {
   } else {
     promise.then((res) => {
       track(uid,msgData,res);
+      slackProxy.sendToSlack({uid,msgData,type})
     });
   }
 };
