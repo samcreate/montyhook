@@ -873,12 +873,21 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
   if (buttonData.indexOf('SHOPBY_ALL') !== -1) {
-    postBacks.shopbyVarietalAll({
-      queryParams,
-      uid,
+    bot.say(uid,'Hmmm? Let me calculate the best match!...',{
+      typing: true,
     })
-      .then(handleResponse)
-      .catch(errorHandler);
+    .then((re)=>{
+      return bot.sendAttachment(uid, 'image', 'https://media.giphy.com/media/vglJc9Bc9DtJe/giphy.gif');
+    })
+    .then((res)=>{
+      postBacks.shopbyVarietalAll({
+        queryParams,
+        uid,
+      })
+        .then(handleResponse)
+        .catch(errorHandler);
+    });
+
   }
 
 

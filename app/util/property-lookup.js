@@ -198,7 +198,7 @@ module.exports = {
     Fruit: 2,
   },
   floral: {
-    ResidualSugar: 3,
+    ResidualSugar: 2,
     Body: 3,
     Acidity: 3,
     Oak: 2,
