@@ -2,6 +2,9 @@ import config from 'config';
 import EventEmitter from 'eventemitter3';
 import Slack from 'slack-node';
 import db from 'montydb';
+import fb from './util/facebook';
+import cardGen from './util/cards-gen';
+import wineCardGen from './util/wine-card-gen';
 
 class SlackProxy extends EventEmitter {
 
@@ -9,6 +12,76 @@ class SlackProxy extends EventEmitter {
     super();
     this.console = new Slack('xoxb-158388941842-KpXzYKLEHORZV9UywyaTLofy');
     this.apiai = apiai;
+  }
+
+  sendWine({channelId, wineIds}) {
+    return new Promise((resolve) => {
+      let usersChannel;
+      db.Channel.findOne({
+        where: {
+          channel_id: channelId,
+        },
+      })
+        .then((channel) => {
+          if (channel) {
+            usersChannel = channel
+            return db.Wines.findAll({
+              where: {
+                id: wineIds,
+              },
+            })
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find a matching channel'});
+          }
+        })
+        .then((cards)=>{
+          if (cards && cards.length >= 1) {
+            let resBack2User = wineCardGen(cards);
+            resolve({ok: true, cards: resBack2User.cards, speech: resBack2User.speech, uid: usersChannel.UserUid, responseCopy: 'Wine sent! 🍷 💌 ✈️'});
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find any matching wine'});
+          }
+        })
+        .catch((err) => {
+          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!'});
+
+        });
+    });
+  }
+
+  sendCards({channelId, cardIds}) {
+    return new Promise((resolve) => {
+      let usersChannel;
+      db.Channel.findOne({
+        where: {
+          channel_id: channelId,
+        },
+      })
+        .then((channel) => {
+          if (channel) {
+            usersChannel = channel
+            return db.Varietals.findAll({
+              where: {
+                id: cardIds,
+              },
+            })
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find a matching channel'});
+          }
+        })
+        .then((cards)=>{
+          if (cards && cards.length >= 1) {
+            cards = cardGen(cards);
+            resolve({ok: true, cards, uid: usersChannel.UserUid, responseCopy: 'Card(s) sent! 🃏 💌 ✈️'});
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find any matching cards'});
+          }
+        })
+        .catch((err) => {
+          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!'});
+
+        });
+    });
   }
 
   sendIntent({channelId, intentId}) {
@@ -33,6 +106,53 @@ class SlackProxy extends EventEmitter {
         .catch((err) => {
           return resolve('☹️ Something went wrong. WAS IT YOU?!' + JSON.stringify(err));
 
+        });
+    });
+  }
+
+
+  sendIntentAsTada({channelId, intentId}){
+    return new Promise((resolve) => {
+      let usersChannel;
+      db.Channel.findOne({
+        where: {
+          channel_id: channelId,
+        },
+      })
+        .then((channel) => {
+          if (channel) {
+            usersChannel = channel;
+            return db.Intents.findById(intentId);
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find a matching channel'});
+          }
+        })
+        .then((intent) => {
+          if (intent){
+            let intentTitle = intent.title.split(',')[0];
+            let fbResponses = [
+              `✨ Tada! Your wine recommendation for: '${intentTitle}' is ready. Check it out!`,
+              `🎉 Woot! The results are in. Find out what wines are best for: '${intentTitle}'.`,
+              `👏 Bravo! My sommeliers have found the perfect wine match for: '${intentTitle}'.`,
+            ];
+            let resCards = [];
+            resCards.push(fb.cardGen(
+              fbResponses[Math.floor(Math.random() * fbResponses.length)],
+              null,
+              intent.bubble1 || '',
+              [{
+                type: 'postback',
+                title: 'See more 👀',
+                payload: 'MISSINGINTENT_FOLLOWUP~'+JSON.stringify({text:intentTitle})
+              }]
+            ));
+            resolve({ok: true, cards: resCards, responseCopy: 'Intent Tada! sent! 🎉 💌 ✈️', uid: usersChannel.UserUid});
+          } else {
+            resolve({ok: false, responseCopy: '☹️ Could not find any matching intents for: ' + JSON.stringify(intentId)});
+          }
+        })
+        .catch((err) => {
+          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!' + JSON.stringify(err)});
         });
     });
   }

@@ -393,45 +393,28 @@ bot.app.post('/sendcards', (req, res, next) => {
 
   let cardIds = req.body.text.split(',').map(function(item) {
     return parseInt(item, 10);
-  }).splice(0, 10);
-  console.log('/sendcards: ',cardIds)
-  let resCards;
-  db.Varietals.findAll({
-    where: {
-      id: cardIds,
-    },
   })
-  .then((cards) =>{
-
-    if (cards && cards.length >= 1){
-      resCards = cards;
-      return  db.Channel.findOne({
-        where: {
-          channel_id: req.body.channel_id,
-        },
-      });
-    } else {
-      return res.status(200).send('☹️ Could not find any matching cards for: ' + JSON.stringify(cardIds));
-    }
-  })
-  .then((channel) =>{
-    if (channel){
-      resCards = cardGen(resCards);
+  .splice(0, 10);
+  console.log('/sendcards: ',cardIds);
+  slackProxy.sendCards({channelId: req.body.channel_id, cardIds})
+  .then((response) => {
+    if (response.ok){
       handleResponse({
-        uid: channel.UserUid,
+        uid: response.uid,
         messages: [
           {
-            cards: resCards,
+            cards: response.cards,
             type: 1,
           },
         ],
       });
-    } // if channel
-    res.status(200).send('Card(s) sent! 🃏 💌 ✈️');
-  })
-  .catch((err) =>{
-    res.status(200).send('☹️ There was an Error with your request: ' + JSON.stringify(err));
+    }
+    res.status(200).json({
+      response_type: 'ephemeral',
+      text: response.responseCopy,
+    });
   });
+
 });
 bot.app.post('/getuser', (req, res, next) => {
   console.log('/getuser',req.body.text);
@@ -525,7 +508,7 @@ bot.app.post('/search', (req, res, next) => {
     order: 'title ASC',
     limit: 5,
     where: {
-      $or: (function() {
+      $and: (function() {
         let _tmparr = [];
         searchTerms.forEach((key) => {
           if (key.length > 3) {
@@ -580,7 +563,7 @@ bot.app.post('/search', (req, res, next) => {
               if (!isNaN(parseInt(key))){
                 _tmparr.push({
                   vintage: {
-                    $eq: '%' + key + '%',
+                    $eq: key,
                   },
                 });
               }
@@ -627,7 +610,7 @@ bot.app.post('/search', (req, res, next) => {
     let varietalSearchOptions = {
       limit: 5,
       where: {
-        $or: (function() {
+        $and: (function() {
           let _tmparr = [];
           searchTerms.forEach((key) => {
             if (key.length >= 3) {
@@ -693,60 +676,22 @@ bot.app.post('/search', (req, res, next) => {
   });
 });
 bot.app.post('/sendtada', (req, res, next) => {
-
   let intentId = parseInt(req.body.text);
-  let usersChannel;
-  let fbResponses;
-  db.Channel.findOne({
-    where: {
-      channel_id: req.body.channel_id,
-    },
-  })
-    .then((channel) => {
-      if (channel){
-        usersChannel = channel;
-        return db.Intents.findById(intentId);
-      } else {
-        return res.status(200).send('☹️ Something went wrong, try again plzzz!');
-      }
-    })
-    .then((intent) =>{
-      if (intent){
-        let intentTitle = intent.title.split(',')[0];
-        fbResponses = [
-          `✨ Tada! Your wine recommendation for: '${intentTitle}' is ready. Check it out!`,
-          `🎉 Woot! The results are in. Find out what wines are best for: '${intentTitle}'.`,
-          `👏 Bravo! My sommeliers have found the perfect wine match for: '${intentTitle}'.`,
-        ];
-        let resCards = [];
-        resCards.push(fb.cardGen(
-          fbResponses[Math.floor(Math.random() * fbResponses.length)],
-          null,
-          intent.bubble1 || '',
-          [{
-            "type": 'postback',
-            "title": 'See more 👀',
-            "payload": 'MISSINGINTENT_FOLLOWUP~'+JSON.stringify({text:intentTitle})
-          }]
-        ));
-        return handleResponse({
-          uid: usersChannel.UserUid,
-          messages: [
-            {
-              cards: resCards,
-              type: 1,
-            },
-          ],
-        });
-      } else {
-        return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
-      }
-    })
-    .then(()=>{
-      res.status(200).send('Tada! sent! 🎉 💌 ✈️');
-    })
-    .catch(errorHandler);
-
+  slackProxy.sendIntentAsTada({channelId: req.body.channel_id, intentId})
+  .then((response) => {
+    if (response.ok){
+      handleResponse({
+        uid: response.uid,
+        messages: [
+          {
+            cards: response.cards,
+            type: 1,
+          },
+        ],
+      });
+    }
+    res.status(200).send(response.responseCopy);
+  });
 });
 bot.app.post('/webhook', (req, res, next) => {
   if (config.util.getEnv('NODE_ENV') === 'production') {
@@ -791,6 +736,108 @@ bot.app.post('/webhook', (req, res, next) => {
       next();
     });
 });
+bot.app.post('/wine', (req, res, next) => {
+  let slackResponse = [];
+  let searchTerms = req.body.text.split(' ');
+
+  let wineSearchOptions = {
+    limit: 10,
+    where: {
+      $or: [
+        {
+          $and: [],
+        },
+        {
+          $or: [],
+        },
+      ],
+    },
+  };
+  let $and = wineSearchOptions.where['$or'][0]['$and'];
+  let $or = wineSearchOptions.where['$or'][1]['$or'];
+  searchTerms.forEach((key) => {
+    if (key === 'sparkling' || key === 'dessert' || key === 'fortified' || key === 'natural') {
+      let _style = {};
+      _style[key] = true;
+      $and.push(_style);
+    }
+    if (!isNaN(parseInt(key))) {
+      $and.push({
+        vintage: {
+          $eq: key,
+        },
+      });
+    }
+    if (key === 'white' || key === 'red' || key === 'rose') {
+      $and.push({
+        type: {
+          $eq: key,
+        },
+      });
+    }
+    if (key.length >= 3) {
+      $or.push({
+        name: {
+          $iLike: '%' + key + '%',
+        },
+      });
+      $or.push({
+        producer: {
+          $iLike: '%' + key + '%',
+        },
+      });
+    }
+  });
+
+  db.Wines.findAll(wineSearchOptions)
+    .then((results) => {
+      console.log('Intents resluts: ', results.length);
+      if (results && results.length >= 1) {
+
+        results.forEach((item) => {
+          let _wineTitle = `${item.vintage} ${item.producer}, ${item.name}`
+          slackResponse.push(
+            {
+              pretext: `*${_wineTitle}*`,
+              text: `${item.description}`,
+              fallback: 'Result',
+              callback_id: 'sendwine',
+              color: '#3AA3E3',
+              attachment_type: 'default',
+              mrkdwn_in: ['text', 'pretext'],
+              thumb_url: item.hero,
+              actions: [
+                {
+                  name: 'wine',
+                  text: 'Send To User',
+                  style: 'danger',
+                  type: 'button',
+                  value: item.id,
+                  confirm: {
+                    title: 'Confirm',
+                    text: `${_wineTitle} will be sent to a live user.`,
+                    ok_text: 'Yes',
+                    dismiss_text: 'No',
+                  },
+                },
+              ],
+            }
+          );
+        });
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: 'Results: ',
+          attachments: slackResponse,
+        });
+
+      } else {
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: '👻 No results!',
+        });
+      }
+    });
+});
 bot.app.post('/intent', (req, res, next) => {
 
   let slackResponse = [];
@@ -831,7 +878,7 @@ bot.app.post('/intent', (req, res, next) => {
               mrkdwn_in: ['text'],
               actions: [
                 {
-                  name: 'sendintent',
+                  name: 'intent',
                   text: 'Send To User',
                   style: 'danger',
                   type: 'button',
@@ -844,7 +891,7 @@ bot.app.post('/intent', (req, res, next) => {
                   },
                 },
                 {
-                  name: 'sendintent_tada',
+                  name: 'intent_tada',
                   text: 'Send As a Tada 🎉',
                   style: 'danger',
                   type: 'button',
@@ -869,21 +916,166 @@ bot.app.post('/intent', (req, res, next) => {
       }
     });
 });
+bot.app.post('/card', (req, res, next) => {
+
+  let slackResponse = [];
+  let searchTerms = req.body.text.split(' ');
+  let varietalSearchOptions = {
+    order: 'name ASC',
+    limit: 10,
+    where: {
+      $or: (function() {
+        let _tmparr = [];
+        searchTerms.forEach((key) => {
+          if (key.length >= 0) {
+            _tmparr.push({
+              name: {
+                $iLike: '%' + key + '%',
+              },
+            });
+            _tmparr.push({
+              synonyms: {
+                $iLike: '%' + key + '%',
+              },
+            });
+          }
+        });
+        return _tmparr;
+      }()),
+    },
+  };
+  db.Varietals.findAll(varietalSearchOptions)
+    .then((results) => {
+      console.log('card resluts: ', results.length);
+      if (results && results.length >= 1) {
+
+        results.forEach((item) => {
+
+          slackResponse.push(
+            {
+              text: `${item.name}`,
+              fallback: 'Result',
+              callback_id: 'sendcard',
+              color: '#3AA3E3',
+              attachment_type: 'default',
+              mrkdwn_in: ['text'],
+              actions: [
+                {
+                  name: 'card',
+                  text: 'Send To User',
+                  style: 'danger',
+                  type: 'button',
+                  value: item.id,
+                  confirm: {
+                    title: 'Confirm',
+                    text: `${item.name} will be sent to a live user.`,
+                    ok_text: 'Yes',
+                    dismiss_text: 'No',
+                  },
+                },
+              ],
+            }
+          );
+        });
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: 'Results: ',
+          attachments: slackResponse,
+        });
+
+      }
+    });
+});
 bot.app.post('/message_actions', (req, res, next) => {
   let {payload} =  req.body;
   payload = JSON.parse(payload);
   let channelId = payload.channel.id;
-  console.log('payload', typeof payload )
+  console.log('payload',  payload )
   if (payload.callback_id === 'sendintent'){
+    let action = payload.actions[0].name;
     let intentId = payload.actions[0].value;
-    slackProxy.sendIntent({channelId, intentId})
-    .then((text) => {
+    if (action === 'intent') {
+      slackProxy.sendIntent({channelId, intentId})
+      .then((text) => {
+        res.status(200).json({
+          response_type: 'ephemeral',
+          text,
+        });
+      });
+    } else if (action === 'intent_tada') {
+      slackProxy.sendIntentAsTada({channelId, intentId})
+      .then((response) => {
+        if (response.ok){
+          handleResponse({
+            uid: response.uid,
+            messages: [
+              {
+                cards: response.cards,
+                type: 1,
+              },
+            ],
+          });
+        }
+        res.status(200).json({
+          response_type: 'ephemeral',
+          text: response.responseCopy,
+        });
+      });
+    }
+  } //send intent
+
+  if (payload.callback_id === 'sendcard'){
+    let action = payload.actions[0].name;
+    let cardId = payload.actions[0].value;
+    if ( action === 'card' ) {
+      slackProxy.sendCards({channelId, cardIds: [cardId]})
+      .then((response) => {
+        if (response.ok){
+          handleResponse({
+            uid: response.uid,
+            messages: [
+              {
+                cards: response.cards,
+                type: 1,
+              },
+            ],
+          });
+        }
+        res.status(200).json({
+          response_type: 'ephemeral',
+          text: response.responseCopy,
+        });
+      });
+    }
+  } //cards
+
+  if (payload.callback_id === 'sendwine'){
+    let wineId = payload.actions[0].value;
+    slackProxy.sendWine({channelId, wineIds: [wineId]})
+    .then((response) => {
+      if (response.ok){
+        console.log('here:::: ', response.speech)
+        handleResponse({
+          uid: response.uid,
+          messages: [
+            {
+              speech: response.speech,
+              type: 0,
+            },
+            {
+              cards: response.cards,
+              type: 1,
+            },
+          ],
+        });
+      }
       res.status(200).json({
         response_type: 'ephemeral',
-        text,
+        text: response.responseCopy,
       });
     });
-  }
+
+  } //wine
 });
 
 
