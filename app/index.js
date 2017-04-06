@@ -19,11 +19,11 @@ import shortid from 'shortid';
 import wineCardGen from './util/wine-card-gen';
 import cardGen from './util/cards-gen';
 import stopword from 'stopword';
-import slackProxy from './slack-proxy';
+import SlackProxy from './slack-proxy';
 
 
 global.redisCache = redis.createClient(config.get('REDIS'));
-
+const slackProxy = new SlackProxy(APIAI);
 // four hours 14400
 let dashbot = DashBot('2qZGV9kSH8XU6GLM06X0rtAKNqHAOxt9qPUvRGHy').facebook;
 global.cache = Cache({client: global.redisCache, expire: 14400});
@@ -508,25 +508,13 @@ bot.app.post('/getuser', (req, res, next) => {
 });
 bot.app.post('/sendintent', (req, res, next) => {
   let intentId = parseInt(req.body.text);
-  db.Channel.findOne({
-    where: {
-      channel_id: req.body.channel_id,
-    },
-  })
-    .then((channel) => {
-      if (channel){
-        APIAI.triggerIntent({
-          uid: channel.UserUid,
-          intent_id: intentId,
-        });
-        res.status(200).send('Intent sent! 🤖 💌 ✈️');
-      } else {
-        return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
-      }
-    })
-    .catch(()=>{
-      return res.status(200).send('☹️ Could not find any matching intents for: ' + JSON.stringify(intentId));
+  slackProxy.sendIntent({channelId: req.body.channel_id, intentId})
+  .then((text) => {
+    res.status(200).json({
+      response_type: 'ephemeral',
+      text,
     });
+  });
 });
 bot.app.post('/search', (req, res, next) => {
 
@@ -803,6 +791,101 @@ bot.app.post('/webhook', (req, res, next) => {
       next();
     });
 });
+bot.app.post('/intent', (req, res, next) => {
+
+  let slackResponse = [];
+  let searchTerms = req.body.text.split(' ');
+  let intentSearchOptions = {
+    order: 'title ASC',
+    limit: 10,
+    where: {
+      $and: (function() {
+        let _tmparr = [];
+        searchTerms.forEach((key) => {
+          if (key.length > 3) {
+            _tmparr.push({
+              title: {
+                $iLike: '%' + key + '%',
+              },
+            });
+          }
+        });
+        return _tmparr;
+      }()),
+    },
+  };
+  db.Intents.findAll(intentSearchOptions)
+    .then((results) => {
+      console.log('Intents resluts: ', results.length);
+      if (results && results.length >= 1) {
+
+        results.forEach((item) => {
+
+          slackResponse.push(
+            {
+              text: `${item.title}`,
+              fallback: 'Result',
+              callback_id: 'sendintent',
+              color: '#3AA3E3',
+              attachment_type: 'default',
+              mrkdwn_in: ['text'],
+              actions: [
+                {
+                  name: 'sendintent',
+                  text: 'Send To User',
+                  style: 'danger',
+                  type: 'button',
+                  value: item.id,
+                  confirm: {
+                    title: 'Confirm',
+                    text: `${item.title} will be sent to a live user.`,
+                    ok_text: 'Yes',
+                    dismiss_text: 'No',
+                  },
+                },
+                {
+                  name: 'sendintent_tada',
+                  text: 'Send As a Tada 🎉',
+                  style: 'danger',
+                  type: 'button',
+                  value: item.id,
+                  confirm: {
+                    title: 'Confirm',
+                    text: `${item.title} will be sent to a live user as a Tada 🎉.`,
+                    ok_text: 'Yes',
+                    dismiss_text: 'No',
+                  },
+                },
+              ],
+            }
+          );
+        });
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: 'Results: ',
+          attachments: slackResponse,
+        });
+
+      }
+    });
+});
+bot.app.post('/message_actions', (req, res, next) => {
+  let {payload} =  req.body;
+  payload = JSON.parse(payload);
+  let channelId = payload.channel.id;
+  console.log('payload', typeof payload )
+  if (payload.callback_id === 'sendintent'){
+    let intentId = payload.actions[0].value;
+    slackProxy.sendIntent({channelId, intentId})
+    .then((text) => {
+      res.status(200).json({
+        response_type: 'ephemeral',
+        text,
+      });
+    });
+  }
+});
+
 
 bot.on('attachment', (payload, chat) => {
   // Send an attachment

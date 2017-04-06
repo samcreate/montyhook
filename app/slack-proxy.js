@@ -4,9 +4,37 @@ import Slack from 'slack-node';
 import db from 'montydb';
 
 class SlackProxy extends EventEmitter {
-  constructor() {
+
+  constructor(apiai) {
     super();
     this.console = new Slack('xoxb-158388941842-KpXzYKLEHORZV9UywyaTLofy');
+    this.apiai = apiai;
+  }
+
+  sendIntent({channelId, intentId}) {
+    return new Promise((resolve) => {
+
+      db.Channel.findOne({
+        where: {
+          channel_id: channelId,
+        },
+      })
+        .then((channel) => {
+          if (channel) {
+            this.apiai.triggerIntent({
+              uid: channel.UserUid,
+              intent_id: intentId,
+            });
+            resolve('Intent sent! 🤖 💌 ✈️');
+          } else {
+            resolve('☹️ Could not find a matching channel');
+          }
+        })
+        .catch((err) => {
+          return resolve('☹️ Something went wrong. WAS IT YOU?!' + JSON.stringify(err));
+
+        });
+    });
   }
 
   sendToSlack({uid, msgData, type}) {
@@ -166,4 +194,4 @@ class SlackProxy extends EventEmitter {
 
 }
 
-module.exports = new SlackProxy();
+module.exports = SlackProxy;
