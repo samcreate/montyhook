@@ -563,7 +563,7 @@ bot.app.post('/search', (req, res, next) => {
               if (!isNaN(parseInt(key))){
                 _tmparr.push({
                   vintage: {
-                    $eq: key,
+                    $eq: '%' + key + '%',
                   },
                 });
               }
@@ -610,7 +610,7 @@ bot.app.post('/search', (req, res, next) => {
     let varietalSearchOptions = {
       limit: 5,
       where: {
-        $and: (function() {
+        $or: (function() {
           let _tmparr = [];
           searchTerms.forEach((key) => {
             if (key.length >= 3) {
