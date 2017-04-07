@@ -68,6 +68,9 @@ const bot = new BootBot({
 });
 
 bot.app.use(bodyParser.urlencoded({ extended: false }));
+bot.app.get('/test', (req, res, next) =>{
+  return res.send(new Date().getHours()+'');
+});
 bot.app.post('/send-message', (req, res, next) =>{
   console.log('/send-message', req.body);
   db.Channel.findOne({
@@ -913,6 +916,11 @@ bot.app.post('/intent', (req, res, next) => {
           attachments: slackResponse,
         });
 
+      } else {
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: '👻 No results!',
+        });
       }
     });
 });
@@ -983,6 +991,11 @@ bot.app.post('/card', (req, res, next) => {
           attachments: slackResponse,
         });
 
+      } else {
+        return res.status(200).json({
+          response_type: 'ephemeral',
+          text: '👻 No results!',
+        });
       }
     });
 });

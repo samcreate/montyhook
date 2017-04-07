@@ -10,7 +10,8 @@ import wineCardGen from './util/wine-card-gen';
 import scoreBottles from './util/score-bottles';
 import shortid from 'shortid';
 import Cache from 'express-redis-cache';
-
+import check from './util/after-hours-check';
+import copy from './util/bot-response-copy';
 
 class PostBacksHandler extends EventEmitter {
   constructor() {
@@ -60,19 +61,12 @@ class PostBacksHandler extends EventEmitter {
       }
     );
     return new Promise((resolve, reject) => {
-      _messages.push({
-        speech: 'I\'m on it.',
-        type: 0,
-      });
-      _messages.push({
-        speech: 'I\'ll get back to you ASAP! 🚀',
-        type: 0,
-      });
-      _messages.push({
-        type: 2,
-        title: 'In the meantime, can I can help with something else?',
-        replies: ['📖 Back to menu', '🤖 How it works'],
-      });
+
+      if (check.ifAfterHours()){
+        _messages = copy.afterHoursSommCopy();
+      } else {
+        _messages = copy.SommNotifyCopy();
+      }
       this._checkIfAlreadyBeenNotified(queryParams.id)
         .then(({sommNotified}) => {
           if (sommNotified === false) {
@@ -180,19 +174,12 @@ class PostBacksHandler extends EventEmitter {
                     }, function(err, response) {
                       console.log('slack.api', response, err, config.get('SLACKYPOO'));
                     });
-                    _messages.push({
-                      speech: 'I\'m on it.',
-                      type: 0,
-                    });
-                    _messages.push({
-                      speech: 'I\'ll get back to you ASAP! 🚀',
-                      type: 0,
-                    });
-                    _messages.push({
-                      type: 2,
-                      title: 'In the meantime, can I can help with something else?',
-                      replies: ['📖 Back to menu', '🤖 How it works'],
-                    });
+
+                    if (check.ifAfterHours()){
+                      _messages = copy.afterHoursSommCopy();
+                    } else {
+                      _messages = copy.SommNotifyCopy();
+                    }
 
                     resolve({
                       uid,
