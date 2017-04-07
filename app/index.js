@@ -356,7 +356,7 @@ bot.app.post('/sendwine', (req, res, next) => {
     },
   })
   .then((bottles) =>{
-    console.log(bottles);
+    //console.log(bottles);
     if (bottles && bottles.length >= 1){
       resBottles = bottles;
       return  db.Channel.findOne({
@@ -374,10 +374,6 @@ bot.app.post('/sendwine', (req, res, next) => {
       handleResponse({
         uid: channel.UserUid,
         messages: [
-          {
-            speech: wineRes.speech,
-            type: 0,
-          },
           {
             cards: wineRes.cards,
             type: 1,
@@ -1066,14 +1062,9 @@ bot.app.post('/message_actions', (req, res, next) => {
     slackProxy.sendWine({channelId, wineIds: [wineId]})
     .then((response) => {
       if (response.ok){
-        console.log('here:::: ', response.speech)
         handleResponse({
           uid: response.uid,
           messages: [
-            {
-              speech: response.speech,
-              type: 0,
-            },
             {
               cards: response.cards,
               type: 1,
