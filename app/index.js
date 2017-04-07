@@ -66,7 +66,6 @@ const bot = new BootBot({
   verifyToken: 'verify_this_biotch',
   appSecret: config.get('FBAPPSECRET'),
 });
-
 bot.app.use(bodyParser.urlencoded({ extended: false }));
 bot.app.get('/test', (req, res, next) =>{
   return res.send(new Date().getHours()+'');
