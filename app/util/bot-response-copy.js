@@ -27,9 +27,13 @@ copy.SommNotifyCopy = (_messages = []) => {
     type: 0,
   });
   _messages.push({
-    type: 2,
+    type: 'buttons',
     title: 'In the meantime, can I can help with something else?',
-    replies: ['📖 Back to menu', '🤖 How it works'],
+    buttons: [{
+      'type': 'postback',
+      'payload': 'MENU~' + JSON.stringify({trigger: "menu"}),
+      'title': 'Go to menu 📖',
+    }],
   });
   return _messages;
 };
