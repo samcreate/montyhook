@@ -793,7 +793,7 @@ bot.app.post('/wine', (req, res, next) => {
       if (results && results.length >= 1) {
 
         results.forEach((item) => {
-          let _wineTitle = `${item.vintage} ${item.producer}, ${item.name}`
+          let _wineTitle = `$${item.price} - ${item.vintage} ${item.producer}, ${item.name}`
           slackResponse.push(
             {
               pretext: `*${_wineTitle}*`,
