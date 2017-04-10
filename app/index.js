@@ -1469,9 +1469,9 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
         });
 
         let lowStockReplies = [
-          'I\'m sorry. 🤔 We currently don\'t have anything in stock that matches your request.',
-          'Hmm. 😔 We don\'t actually have anything in stock that matches your request.',
-          'Oh no! 😱 We seem to have nothing in stock that matches your request.',
+          'I\'m sorry. 🤔 I currently don\'t have anything in stock that matches your request.',
+          'Hmm. 😔 I don\'t actually have anything in stock that matches your request.',
+          'Oh no! 😱 I seem to have nothing in stock that matches your request.',
         ];
 
         let lowStockMessage = {
@@ -1552,9 +1552,9 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
         });
       } else {
         let swipeRright = [
-          'I don’t know that yet. Swipe for close matches or ask a sommelier. 👉',
-          'I don’t have a match. Swipe for near misses or ask a sommelier. 👉',
-          'I am yet to learn that. Swipe for something similar or ask a sommelier. 👉',
+          'It seems I don’t have a perfect match. Swipe for close matches or ask a sommelier. 👉',
+          'It seems I don’t have an exact match. Swipe for near misses or ask a sommelier. 👉',
+          'It seems I don’t have a perfect match. Swipe for something similar or ask a sommelier. 👉',
         ];
         responses.push({
           speech: swipeRright[Math.floor(Math.random() * swipeRright.length)],
