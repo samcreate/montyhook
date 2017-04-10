@@ -88,18 +88,20 @@ bot.app.post('/send-message', (req, res, next) =>{
     }
   })
   .then(()=>{
-    montySlack.api('chat.postMessage', {
-      text: req.body.text,
-      channel: req.body.channel_id,
-      username: `${req.body.user_name} replied`,
-      icon_emoji: ':wine_glass:',
-    }, function(err, response) {
-      if (response.ok === true) {
+    if (req.body.text.length < 640){
+      montySlack.api('chat.postMessage', {
+        text: req.body.text,
+        channel: req.body.channel_id,
+        username: `${req.body.user_name} replied`,
+        icon_emoji: ':wine_glass:',
+      }, function(err, response) {
+        if (response.ok === true) {
 
-      } else {
+        } else {
 
-      }
-    });
+        }
+      });
+    }
   })
   .catch(()=>{
 
