@@ -80,7 +80,7 @@ bot.app.post('/send-message', (req, res, next) =>{
   .then((channel)=>{
     if (channel){
       if (req.body.text.length > 640){
-          res.status(200).send('✋STOP🤚 - your message is too long by:' + (640 - req.body.text.length) + '. Responses need to be under 640 characters.');
+          res.status(200).send('✋STOP🤚 - your message is too long by:' + (req.body.text.length - 640) + '. Responses need to be under 640 characters.');
       } else {
         res.status(200).send('');
         bot.say(channel.UserUid, req.body.text);
