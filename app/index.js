@@ -79,7 +79,12 @@ bot.app.post('/send-message', (req, res, next) =>{
   })
   .then((channel)=>{
     if (channel){
-      bot.say(channel.UserUid, req.body.text);
+      if (req.body.text.length > 640){
+          res.status(200).send('✋STOP🤚 - your message is too long by:' + (640 - req.body.text.length) + '. Responses need to be under 640 characters.');
+      } else {
+        res.status(200).send('');
+        bot.say(channel.UserUid, req.body.text);
+      }
     }
   })
   .then(()=>{
@@ -102,7 +107,7 @@ bot.app.post('/send-message', (req, res, next) =>{
 
   //reset the cache time
 
-  res.status(200).send('');
+
 });
 bot.app.get('/startchat/:uid', (req, res, next) => {
   //
