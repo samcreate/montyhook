@@ -58,9 +58,9 @@ module.exports = (bottles, queryParams, uid, slack) => {
       });
 
       let lowStockReplies = [
-        'I\'m sorry. 🤔 We currently don\'t have anything in stock that matches your request.',
-        'Hmm. 😔 We don\'t actually have anything in stock that matches your request.',
-        'Oh no! 😱 We seem to have nothing in stock that matches your request.',
+        'I\'m sorry. 🤔 I currently don\'t have anything in stock that matches your request.',
+        'Hmm. 😔 I don\'t actually have anything in stock that matches your request.',
+        'Oh no! 😱 I seem to have nothing in stock that matches your request.',
       ];
 
       let lowStockMessage = {
