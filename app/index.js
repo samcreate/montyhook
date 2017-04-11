@@ -1512,7 +1512,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     .catch((err) => {
       console.log('error', err);
     });
-
+  saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'get-winesby-style'});
 });
 APIAI.on('missing-intent', (originalRequest, apiResponse) => {
   //console.log('_handleMissingIntents', originalRequest, apiResponse);
@@ -1606,7 +1606,7 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
         messages: responses,
       });
     });
-
+  saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'missing-intent'});
 });
 APIAI.on('get-varietals', (originalRequest, apiResponse) => {
   let {intent_id} = apiResponse.result.parameters;
@@ -1668,6 +1668,7 @@ APIAI.on('get-varietals', (originalRequest, apiResponse) => {
         messages: response,
       });
     });
+  saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'get-varietals'});
 });
 APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
   const {Varietal} = apiResponse.result.parameters;
@@ -1706,6 +1707,7 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
         .then(handleResponse)
         .catch(errorHandler);
     });
+  saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'varietal-learning-cold'});
 });
 
 const handleResponse = ({uid, messages}) => {
@@ -1858,5 +1860,7 @@ const sendAsUserToSlack = ({uid, text}) => {
     console.log(err);
   });
 };
-
+const saveTransaction = ({uid, originalRequest, apiResponse, transactionName}) => {
+  db.Conversation.create({said: {originalRequest, apiResponse, transactionName}, UserUid: uid});
+};
 bot.start(process.env.PORT || 3000);
