@@ -1158,20 +1158,12 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
   if (buttonData.indexOf('SHOPBY_ALL') !== -1) {
-    bot.say(uid,'Hmmm? Let me calculate the best match!...',{
-      typing: true,
+    postBacks.shopbyVarietalAll({
+      queryParams,
+      uid,
     })
-    .then((re)=>{
-      return bot.sendAttachment(uid, 'image', 'https://media.giphy.com/media/vglJc9Bc9DtJe/giphy.gif');
-    })
-    .then((res)=>{
-      postBacks.shopbyVarietalAll({
-        queryParams,
-        uid,
-      })
-        .then(handleResponse)
-        .catch(errorHandler);
-    });
+      .then(handleResponse)
+      .catch(errorHandler);
 
   }
 
