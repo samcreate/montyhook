@@ -238,43 +238,43 @@ bot.app.get('/startchat/:uid', (req, res, next) => {
           ts: (new Date).getTime(),
         }];
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: '_`/r [TEXT]` to reply_',
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/pause\` to recieve messages from ${ourUser.first_name} in slack_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/unpause\` to allow the bot handle the messages from ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/sendwine 22,34,2\` to send wine cards to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/sendcards 69,666,1\` to send cards to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/sendintent 33\` to send an intent flow to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],
         });
         _response.push({
-          fallback: 'ARRR.',
+          fallback: 'Message sent from Monty',
           color: '#36a64f',
           text: `_\`/sendtada 222\` to send a tada to ${ourUser.first_name}_`,
           mrkdwn_in: ['text', 'pretext'],

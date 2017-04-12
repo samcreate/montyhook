@@ -110,7 +110,6 @@ class SlackProxy extends EventEmitter {
     });
   }
 
-
   sendIntentAsTada({channelId, intentId}){
     return new Promise((resolve) => {
       let usersChannel;
@@ -165,7 +164,7 @@ class SlackProxy extends EventEmitter {
 
     if (type === 0) {
       _attachment = {
-        fallback: 'ARRR.',
+        fallback: msgData.text,
         color: '#36a64f',
         text: msgData.text,
         mrkdwn_in: ['text', 'pretext'],
