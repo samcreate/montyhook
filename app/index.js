@@ -1314,14 +1314,15 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     );
   });
 
-  tasting_notes.forEach((noteId) => {
-    $tasteOR.push(
-      {
-        $eq: `${noteId}`,
-      }
-    );
-  });
-
+  if(tasting_notes[0] != ''){
+    tasting_notes.forEach((noteId) => {
+      $tasteOR.push(
+        {
+          $eq: `${noteId}`,
+        }
+      );
+    });
+  }
 
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Wines')
