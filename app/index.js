@@ -1250,10 +1250,11 @@ bot.setGreetingText('I\'m Monty: A sommelier in your pocket. I can help you...Pa
 
 
 APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
-  let {locations, vintage, properties, styles, varietals, type, price, direction, price_threshold} = apiResponse.result.parameters;
+  let {locations, vintage, properties, styles, varietals, type, price, direction, price_threshold, tasting_notes} = apiResponse.result.parameters;
   let tmpYear = vintage || '';
   let $locOR = [];
   let $varOR = [];
+  let $tasteOR = [];
   let dessertBool = [false, true];
   let sparklingBool = [false, true];
   let fortifiedBool = [false, true];
@@ -1263,6 +1264,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
   vintage = `%${tmpYear}%`;
   varietals = varietals || [''];
   locations = locations || [''];
+  tasting_notes = tasting_notes || [''];
 
   //convert the value from api.ai to an array
   if (price_threshold && price_threshold.length > 2 ){
@@ -1312,6 +1314,14 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
     );
   });
 
+  tasting_notes.forEach((noteId) => {
+    $tasteOR.push(
+      {
+        $eq: `${noteId}`,
+      }
+    );
+  });
+
 
   let cacheObj = cacher(db.sequelize, redisCache)
     .model('Wines')
@@ -1326,6 +1336,9 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
         },
         '$Locations.name$': {
           $or: $locOR,
+        },
+        '$TastingNotes.id$': {
+          $or: $tasteOR,
         },
         vintage: {
           like: vintage,
@@ -1373,6 +1386,9 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
       },
       {
         model: db.Locations,
+      },
+      {
+        model: db.TastingNotes,
       },
       {
         model: db.BaseAttributes,
