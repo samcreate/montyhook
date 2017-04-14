@@ -361,6 +361,12 @@ bot.app.post('/sendwine', (req, res, next) => {
     where: {
       id: wineIds,
     },
+    include: [
+      {
+        model: db.Varietals,
+        as: 'Varietals',
+      },
+    ],
   })
   .then((bottles) =>{
     //console.log(bottles);
