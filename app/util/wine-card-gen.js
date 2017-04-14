@@ -16,7 +16,7 @@ module.exports = (resBottles) => {
     //and one for not having a variance.
     let description = `${wine.description}`;
     let tmpCard = {
-      title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name} - ${wine.Varietals[0].name}`,
+      title: `${place} ${wine.display_name}`,
       image_url: wine.hero_gallery || '',
       subtitle: description || '',
       item_url: wine.url,

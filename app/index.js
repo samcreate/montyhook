@@ -478,6 +478,7 @@ bot.app.post('/getuser', (req, res, next) => {
           }
         );
       });
+      console.log(_response)
       res.status(200).json({
         response_type: 'ephemeral',
         text: 'Results: ',
@@ -806,7 +807,7 @@ bot.app.post('/wine', (req, res, next) => {
       if (results && results.length >= 1) {
 
         results.forEach((item) => {
-          let _wineTitle = `$${item.price} - ${item.vintage} ${item.producer}, ${item.name}`
+          let _wineTitle = `$${item.price} - ${item.display_name}`;
           slackResponse.push(
             {
               pretext: `*${_wineTitle}*`,
