@@ -15,9 +15,8 @@ module.exports = (resBottles) => {
     //description for if there's a varaince applied on the selection
     //and one for not having a variance.
     let description = `${wine.description}`;
-
     let tmpCard = {
-      title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name}`,
+      title: `${place} ${wine.vintage} ${wine.producer}, ${wine.name} - ${wine.Varietals[0].name}`,
       image_url: wine.hero_gallery || '',
       subtitle: description || '',
       item_url: wine.url,
