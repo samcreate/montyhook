@@ -29,6 +29,12 @@ class SlackProxy extends EventEmitter {
               where: {
                 id: wineIds,
               },
+              include: [
+                {
+                  model: db.Varietals,
+                  as: 'Varietals',
+                },
+              ],
             })
           } else {
             resolve({ok: false, responseCopy: '☹️ Could not find a matching channel'});
@@ -43,7 +49,7 @@ class SlackProxy extends EventEmitter {
           }
         })
         .catch((err) => {
-          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!'});
+          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!' + JSON.stringify(err)});
 
         });
     });
@@ -78,7 +84,7 @@ class SlackProxy extends EventEmitter {
           }
         })
         .catch((err) => {
-          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!'});
+          return resolve({ok: false, responseCopy: '☹️ Something went wrong. WAS IT YOU?!' + JSON.stringify(err)});
 
         });
     });
