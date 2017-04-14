@@ -478,7 +478,7 @@ bot.app.post('/getuser', (req, res, next) => {
           }
         );
       });
-      console.log(_response)
+      console.log(_response);
       res.status(200).json({
         response_type: 'ephemeral',
         text: 'Results: ',
@@ -1486,7 +1486,7 @@ APIAI.on('get-winesby-style', (originalRequest, apiResponse) => {
           text: `No Stock or match found for user's request: ${originalRequest.text}`,
           username: 'Monty\'s Pager',
           icon_emoji: ':pager:',
-          channel: config.get('SLACK_CHANNEL'),
+          channel: config.get('MISSING_STOCK_CHANNEL'),
         }, function(err, response) {
           console.log('slack.api', response, err, config.get('SLACKYPOO'));
         });
