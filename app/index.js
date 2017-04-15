@@ -1535,6 +1535,8 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
 
   let responses = [];
   let missedMsg = originalRequest.text;
+  missedMsg = missedMsg.replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, '');
+  missedMsg = missedMsg.replace(/\s{2,}/g, ' ');
   let missedMsgArr = missedMsg.split(' ');
   let cards = [];
 
@@ -1563,14 +1565,102 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
     .ttl(config.get('CACHE_TIME'));
   cacheObj.findAll(options)
     .then((results) => {
-      let randomResCopy = [
-        'I haven\'t learned what that is yet.',
-        'Hmm. It seems I don\'t know that yet. 😶',
-        'You have found something I don\'t know yet. 💡',
-      ];
-      if (results.length === 0 || results.length === undefined){
+      //add this card no matter what.
+      cards.push(fb.cardGen(
+        'ASK A SOMMELIER',
+        '',
+        'Have a real sommelier answer your question as quick as humanly possible. 💪',
+        [{
+          'type': 'postback',
+          'payload': 'SOMMELIER~' + JSON.stringify({
+              missedIntent: missedMsg,
+              id: shortid.generate(),
+            }),
+          'title': 'Ask now 🛎️',
+        }]
+      ));
+      //if no reults for intetns, let's look at our Varietals (cards)
+      return new Promise((resolve, reject) => {
+        if (results.length === 0 || results.length === undefined) {
+          let varietalSearchOptions = {
+            order: 'name ASC',
+            limit: 10,
+            where: {
+              $or: (function() {
+                let _tmparr = [];
+                missedMsgArr.forEach((key) => {
+                  if (key.length >= 0) {
+                    _tmparr.push({
+                      name: {
+                        $iLike: '%' + key + '%',
+                      },
+                    });
+                    _tmparr.push({
+                      synonyms: {
+                        $iLike: '%' + key + '%',
+                      },
+                    });
+                  }
+                });
+                return _tmparr;
+              }()),
+            },
+          };
+          db.Varietals.findAll(varietalSearchOptions)
+            .then((varietalResults) => {
+
+              varietalResults.forEach((varietal) => {
+                cards.push(fb.cardGen(
+                  varietal.name,
+                  '',
+                  varietal.description || '',
+                  [{
+                    'type': 'postback',
+                    'payload': 'VARIETAL_LEARNMORE~' + JSON.stringify({
+                        varietal_id: varietal.id,
+                        steps: ['bubble1', 'bubble2'],
+                        step: 1,
+                        wine_params: {
+                          varietal_id: varietal.id,
+                          variance: null,
+                        },
+                    }),
+                    'title': 'See more 👀',
+                  }]
+                ));
+              });
+              resolve(cards);
+            });
+        } else {
+          results.forEach((intent) => {
+            let _tmpTitle = intent.title.split(',')[0];
+            cards.push(fb.cardGen(
+              _tmpTitle,
+              '',
+              intent.bubble1 || '',
+              [{
+                'type': 'postback',
+                'payload': 'SHOW_INTENT~' + JSON.stringify({
+                    intent_id: intent.id
+                  }),
+                'title': 'See more 👀',
+              }]
+            ));
+          });
+          resolve(cards);
+        }
+      });
+    })
+    .then((cardsResponse) => {
+
+      if (cardsResponse.length === 0 || cardsResponse.length === undefined){
+        let randomResCopy = [
+          'I haven\'t learned what that is yet.',
+          'Hmm. It seems I don\'t know that yet. 😶',
+          'You have found something I don\'t know yet. 💡',
+        ];
         responses.push({
-            speech: randomResCopy[Math.floor(Math.random() * randomResCopy.length)],
+          speech: randomResCopy[Math.floor(Math.random() * randomResCopy.length)],
           type: 0,
         });
       } else {
@@ -1583,46 +1673,24 @@ APIAI.on('missing-intent', (originalRequest, apiResponse) => {
           speech: swipeRright[Math.floor(Math.random() * swipeRright.length)],
           type: 0,
         });
+        responses.push({
+          cards: cardsResponse,
+          type: 1,
+        });
       }
 
-      cards.push(fb.cardGen(
-        'ASK A SOMMELIER',
-        '',
-        'Have a real sommelier answer your question as quick as humanly possible. 💪',
-        [{
-          'type': 'postback',
-          'payload': 'SOMMELIER~' + JSON.stringify({
-            missedIntent: missedMsg,
-            id: shortid.generate(),
-          }),
-          'title': 'Ask now 🛎️',
-        }]
-      ));
-      results.forEach((intent) => {
-        let _tmpTitle = intent.title.split(',')[0];
-        cards.push(fb.cardGen(
-          _tmpTitle,
-          '',
-          intent.bubble1 || '',
-          [{
-            'type': 'postback',
-            'payload': 'SHOW_INTENT~' + JSON.stringify({
-                intent_id: intent.id
-              }),
-            'title': 'See more 👀',
-          }]
-        ));
-      });
-      responses.push({
-        cards,
-        type: 1,
-      });
       handleResponse({
         uid: originalRequest.uid,
         messages: responses,
       });
-    });
-  saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'missing-intent'});
+    })
+    .catch(errorHandler);
+  saveTransaction({
+    uid: originalRequest.uid,
+    originalRequest,
+    apiResponse,
+    transactionName: 'missing-intent'
+  });
 });
 APIAI.on('get-varietals', (originalRequest, apiResponse) => {
   let {intent_id} = apiResponse.result.parameters;
