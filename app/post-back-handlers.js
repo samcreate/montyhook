@@ -45,6 +45,7 @@ class PostBacksHandler extends EventEmitter {
           },
         ],
       });
+      db.TrackingEvents.create({type: 'sharing', UserUid: uid});
     });
   }
 
