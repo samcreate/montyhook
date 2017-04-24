@@ -1803,13 +1803,13 @@ const handleResponse = ({uid, messages}) => {
   if (type === 0) {
     msgData.text = speech;
     promise = bot.say(uid, msgData.text, {
-      typing: true,
+      typing: false,
     });
   }
   if (type === 1) {
     msgData = cards;
     promise = bot.sendGenericTemplate(uid, msgData, {
-      typing: true,
+      typing: false,
     });
   }
   if (type === 2) {
@@ -1818,7 +1818,7 @@ const handleResponse = ({uid, messages}) => {
       quickReplies: replies,
     };
     promise = bot.say(uid, msgData, {
-      typing: true,
+      typing: false,
     });
   }
   if (type === 3) {
@@ -1827,7 +1827,7 @@ const handleResponse = ({uid, messages}) => {
       url: imageUrl,
     };
     promise = bot.say(uid, msgData, {
-      typing: true,
+      typing: false,
     });
   }
   if (type === 'buttons') {
@@ -1836,7 +1836,7 @@ const handleResponse = ({uid, messages}) => {
       buttons,
     };
     promise = bot.say(uid, msgData, {
-      typing: true,
+      typing: false,
     });
   }
 
