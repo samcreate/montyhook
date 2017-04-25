@@ -1920,6 +1920,9 @@ APIAI.on('compound-request', (originalRequest, apiResponse) => {
       } else if (styles.length >= 1) {
         responseType = styles[0].toLowerCase() + ' wines';
       } else if (type) {
+        if (type === 'rose') {
+          type = '🌹 rosé';
+        }
         responseType = type.toLowerCase() + ' wines';
       }
       intentTitle = intentTitle.toLowerCase();
