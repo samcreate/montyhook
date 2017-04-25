@@ -1803,7 +1803,6 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
   saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'varietal-learning-cold'});
 });
 APIAI.on('compound-request', (originalRequest, apiResponse) => {
-  console.log(' first -------[-[[------=0----]]]')
   let {intent_id, styles, varietals, type} = apiResponse.result.parameters;
   let wineParams = {};
   let $varOR = [];
@@ -1830,7 +1829,6 @@ APIAI.on('compound-request', (originalRequest, apiResponse) => {
     order: [[db.Varietals, db.IntentVarietals, 'weight', 'ASC']],
   })
     .then((intent) => {
-      console.log(' second -------[-[[------=0----]]]')
       intentDB = intent[0];
       intentTitle = intentDB.title.split(',')[0];
       //setup wine params
@@ -1893,32 +1891,51 @@ APIAI.on('compound-request', (originalRequest, apiResponse) => {
       });
     })
     .then((bottles) => {
-      console.log(' third -------[-[[------=0----]]]', wineParams)
       return scoreBottles(bottles, wineParams, originalRequest.uid, slack, true);
     })
     .then((scoredBottles) => {
-      console.log(' fourth -------[-[[------=0----]]]')
       let bottlesIds = [];
       scoredBottles.bottles.forEach(item =>{
         bottlesIds.push(item.id);
       });
-      console.log('scoredBottles', bottlesIds);
-
       let resCards = [];
       resCards.push(fb.cardGen(
-        'test',
+        intentTitle,
         intentDB.hero_square,
         intentDB.bubble1 || '',
         [{
+          type: 'postback',
+          title: 'Pairing Guide 👀',
+          payload: 'MENU~' + JSON.stringify({trigger: intentTitle}),
+        },{
           type: 'postback',
           title: 'Paired wines 👀',
           payload: 'WINELIST~' + JSON.stringify({ids: bottlesIds}),
         }]
       ));
 
+      let responseType;
+      if (varietals.length >= 1) {
+        responseType = scoredBottles.bottles[0].Varietals[0].name.toLowerCase();
+      } else if (styles.length >= 1) {
+        responseType = styles[0].toLowerCase() + ' wines';
+      } else if (type) {
+        responseType = type.toLowerCase() + ' wines';
+      }
+      intentTitle = intentTitle.toLowerCase();
+      let randomTextResponses = [
+        `💯 Check out my pairing guide for ${intentTitle}, or see paired ${responseType} that match your request. 👇`,
+        `✨ See my pairing guide for ${intentTitle}, or check out paired ${responseType} that match your request. 🎯`,
+        `👏 You can see my pairing guide for ${intentTitle}, or check out paired ${responseType} that suit your request. 😋`,
+      ];
+
       handleResponse({
         uid: originalRequest.uid,
         messages: [
+          {
+            speech: randomTextResponses[Math.floor(Math.random() * randomTextResponses.length)],
+            type: 0,
+          },
           {
             cards: resCards,
             type: 1,
