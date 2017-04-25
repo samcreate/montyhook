@@ -20,7 +20,7 @@ import wineCardGen from './util/wine-card-gen';
 import cardGen from './util/cards-gen';
 import stopword from 'stopword';
 import SlackProxy from './slack-proxy';
-
+import scoreBottles from './util/score-bottles';
 
 global.redisCache = redis.createClient(config.get('REDIS'));
 const slackProxy = new SlackProxy(APIAI);
@@ -1219,6 +1219,15 @@ bot.on('postback', (payload) => {
       .catch(errorHandler);
   }
 
+  if (buttonData.indexOf('WINELIST') !== -1) {
+    postBacks.returnWineByIDS({
+      queryParams,
+      uid,
+    })
+      .then(handleResponse)
+      .catch(errorHandler);
+  }
+
   if (['FIND_WINEBY_STYLE', 'EXPLORE_VARIETALS', 'HELP', 'FIND_A_WINE','HOW_IT_WORKS','ABOUT_MONTYS_PICKS'].indexOf(buttonData.split('~')[0]) !== -1) {
     APIAI.get({
       uid,
@@ -1792,6 +1801,141 @@ APIAI.on('varietal-learning-cold', (originalRequest, apiResponse) => {
         .catch(errorHandler);
     });
   saveTransaction({uid: originalRequest.uid, originalRequest, apiResponse, transactionName: 'varietal-learning-cold'});
+});
+APIAI.on('compound-request', (originalRequest, apiResponse) => {
+  console.log(' first -------[-[[------=0----]]]')
+  let {intent_id, styles, varietals, type} = apiResponse.result.parameters;
+  let wineParams = {};
+  let $varOR = [];
+  let dessertBool = [false, true];
+  let sparklingBool = [false, true];
+  let fortifiedBool = [false, true];
+  let naturalBool = [false, true];
+  let types = ['white', 'red', 'rose', 'sparkling', 'dessert'];
+  let intentTitle;
+  let intentDB;
+  varietals = varietals || [''];
+  if (type.length < 1) {
+    type = types;
+  }
+  db.Intents.findAll({
+    where: {
+      id: intent_id,
+    },
+    include: [{
+      model: db.Varietals,
+    }, {
+      model: db.BaseAttributes,
+    }],
+    order: [[db.Varietals, db.IntentVarietals, 'weight', 'ASC']],
+  })
+    .then((intent) => {
+      console.log(' second -------[-[[------=0----]]]')
+      intentDB = intent[0];
+      intentTitle = intentDB.title.split(',')[0];
+      //setup wine params
+      intentDB.BaseAttributes.forEach((attr) => {
+        wineParams[attr.name] = attr.IntentsAttributes.weight;
+      });
+
+      //setup wine search query
+      styles.forEach((style) => {
+        if (style === 'Dessert') {
+          dessertBool = true;
+        }
+        if (style === 'Sparkling') {
+          sparklingBool = true;
+        }
+        if (style === 'Fortified') {
+          fortifiedBool = true;
+        }
+        if (style === 'Organic') {
+          naturalBool = true;
+        }
+      });
+
+      varietals.forEach((varietalId) => {
+        $varOR.push(
+          {
+            $eq: `${varietalId}`,
+          }
+        );
+      });
+      let _where = {
+        $or: [
+          {
+            '$Varietals.id$': {
+              $or: $varOR,
+            },
+            dessert: dessertBool,
+            sparkling: sparklingBool,
+            fortified: fortifiedBool,
+            natural: naturalBool,
+            type: type,
+          },
+        ],
+      };
+      return db.Wines.findAll({
+        include: [
+          {
+            model: db.Varietals,
+            as: 'Varietals',
+          },
+          {
+            model: db.BaseAttributes,
+            where: {
+              type: 'wine-attr',
+            },
+          },
+        ],
+        where: _where,
+        attributes: ['id'],
+      });
+    })
+    .then((bottles) => {
+      console.log(' third -------[-[[------=0----]]]', wineParams)
+      return scoreBottles(bottles, wineParams, originalRequest.uid, slack, true);
+    })
+    .then((scoredBottles) => {
+      console.log(' fourth -------[-[[------=0----]]]')
+      let bottlesIds = [];
+      scoredBottles.bottles.forEach(item =>{
+        bottlesIds.push(item.id);
+      });
+      console.log('scoredBottles', bottlesIds);
+
+      let resCards = [];
+      resCards.push(fb.cardGen(
+        'test',
+        intentDB.hero_square,
+        intentDB.bubble1 || '',
+        [{
+          type: 'postback',
+          title: 'Paired wines 👀',
+          payload: 'WINELIST~' + JSON.stringify({ids: bottlesIds}),
+        }]
+      ));
+
+      handleResponse({
+        uid: originalRequest.uid,
+        messages: [
+          {
+            cards: resCards,
+            type: 1,
+          },
+        ],
+      });
+
+    })
+    .catch((err) => {
+      console.log('error', err);
+    });
+  saveTransaction({
+    uid: originalRequest.uid,
+    originalRequest,
+    apiResponse,
+    transactionName: 'compound-request'
+  });
 });
 
 const handleResponse = ({uid, messages}) => {

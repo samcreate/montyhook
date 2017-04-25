@@ -48,6 +48,41 @@ class PostBacksHandler extends EventEmitter {
       db.TrackingEvents.create({type: 'sharing', UserUid: uid});
     });
   }
+  returnWineByIDS({queryParams, uid}) {
+    let _wineIds = queryParams.ids;
+    return new Promise((resolve, reject) => {
+      let WinesQY = cacher(db.sequelize, redisCache)
+        .model('Wines')
+        .ttl(config.get('CACHE_TIME'));
+      WinesQY.findAll({
+        where: {
+          id: _wineIds,
+        },
+      })
+      .then((bottles) =>{
+        let wineRes = wineCardGen(bottles);
+        resolve({
+          uid,
+          messages: [
+            {
+              speech: wineRes.speech,
+              type: 0,
+            },
+            {
+              cards: wineRes.cards,
+              type: 1,
+            },
+          ],
+        });
+      })
+      .catch((err) => {
+        reject({
+          err,
+          uid,
+        });
+      });
+    });
+  }
 
   imageCheck({queryParams, uid}) {
     let _image = queryParams.image;

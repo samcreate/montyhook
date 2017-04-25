@@ -1,7 +1,7 @@
 import stats from './statistics';
 import wineCardGen from './wine-card-gen';
 import config from 'config';
-module.exports = (bottles, queryParams, uid, slack) => {
+module.exports = (bottles, queryParams, uid, slack, raw = false) => {
   return new Promise((resolve) => {
     let resBottles = [];
     bottles.forEach((bottle) => {
@@ -76,22 +76,28 @@ module.exports = (bottles, queryParams, uid, slack) => {
     } else if (resBottles.length > 10) {
       resBottles = resBottles.splice(0, 10);
     }
+
     resBottles = resBottles.map(item => {
       return item.bottle.bottle;
     });
-    let wineRes = wineCardGen(resBottles);
-    resolve({
-      uid,
-      messages: [
-        {
-          speech: wineRes.speech,
-          type: 0,
-        },
-        {
-          cards: wineRes.cards,
-          type: 1,
-        },
-      ],
-    });
+    if (raw){
+      resolve({bottles: resBottles, raw: true});
+    } else {
+      let wineRes = wineCardGen(resBottles);
+      resolve({
+        uid,
+        messages: [
+          {
+            speech: wineRes.speech,
+            type: 0,
+          },
+          {
+            cards: wineRes.cards,
+            type: 1,
+          },
+        ],
+      });
+    }
+
   });
 };
