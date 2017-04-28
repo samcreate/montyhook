@@ -412,7 +412,6 @@ class PostBacksHandler extends EventEmitter {
           resolve(response);
         })
         .catch((err) => {
-          console.log('FUCK YOUUUUUU')
           reject({
             err,
             uid,

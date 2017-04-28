@@ -37,6 +37,7 @@ module.exports = (cards, variance) => {
   });
 
   if (variance){
+    console.log('Monty\'s picks-------------------------------------------->', variance);
     _cards.push(
       fb.cardGen(
         ' 💎 Monty’s picks',

@@ -1873,7 +1873,10 @@ APIAI.on('compound-request', (originalRequest, apiResponse) => {
           },
         ],
       };
-      return db.Wines.findAll({
+      let WinesQY = cacher(db.sequelize, global.redisCache)
+        .model('Wines')
+        .ttl(config.get('CACHE_TIME'));
+      return WinesQY.findAll({
         include: [
           {
             model: db.Varietals,
@@ -1887,11 +1890,10 @@ APIAI.on('compound-request', (originalRequest, apiResponse) => {
           },
         ],
         where: _where,
-        attributes: ['id'],
       });
     })
     .then((bottles) => {
-      return scoreBottles(bottles, wineParams, originalRequest.uid, slack, true);
+      return scoreBottles(bottles, {variance: wineParams}, originalRequest.uid, slack, true);
     })
     .then((scoredBottles) => {
       let bottlesIds = [];
